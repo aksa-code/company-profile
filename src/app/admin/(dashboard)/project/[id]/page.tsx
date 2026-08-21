@@ -35,14 +35,42 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   }, [projectId]);
 
   // Fungsi Hapus Unit
+  // Fungsi Hapus Unit beserta Gambarnya di Storage
   const handleDeleteUnit = async (unitId: string) => {
     if (!confirm('Yakin ingin menghapus tipe unit ini?')) return;
 
-    const { error } = await supabase.from('unit_types').delete().eq('id', unitId);
-    if (error) {
-      alert('Gagal menghapus unit: ' + error.message);
-    } else {
+    try {
+      // 1. Ambil data unit terlebih dahulu untuk mendapatkan URL gambarnya
+      const { data: unitData, error: fetchError } = await supabase
+        .from('unit_types')
+        .select('image')
+        .eq('id', unitId)
+        .single();
+
+      if (fetchError) throw new Error('Gagal mengambil data unit untuk dihapus.');
+
+      // 2. Jika unit punya gambar di Supabase Storage, hapus filenya
+      if (unitData && unitData.image) {
+        const fileName = unitData.image.split('/').pop();
+        if (fileName) {
+          await supabase.storage
+            .from('house-type-images')
+            .remove([fileName]);
+        }
+      }
+
+      // 3. Hapus baris data dari database tabel unit_types
+      const { error: deleteError } = await supabase
+        .from('unit_types')
+        .delete()
+        .eq('id', unitId);
+
+      if (deleteError) throw new Error(deleteError.message);
+
+      alert('Unit berhasil dihapus!');
       fetchData(); // Refresh data setelah hapus
+    } catch (error: any) {
+      alert('Gagal menghapus unit: ' + error.message);
     }
   };
 
@@ -64,7 +92,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12">
-      
+
       {/* Header Proyek */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100">
         <div className="space-y-1">
@@ -138,7 +166,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       )}
                     </div>
                     <p className="text-sm font-bold text-orange-600">Start: {unit.priceStarting || unit.price_starting}</p>
-                    
+
                     <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 pt-1">
                       <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
                         🛏️ {unit.bedrooms || 0} Kamar Tidur
@@ -154,7 +182,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       </p>
                     )}
                   </div>
-                  
+
                   {/* Tombol Aksi: Edit & Hapus Unit */}
                   <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
                     <Link

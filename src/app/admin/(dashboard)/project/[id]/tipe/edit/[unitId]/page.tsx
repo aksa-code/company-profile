@@ -9,15 +9,15 @@ import Link from 'next/link';
 const LIST_CATEGORIES = ['Komersil', 'Subsidi'];
 const LIST_FLOORS = ['Lantai 1', 'Lantai 2', 'Lantai 2 + Balkon', 'Lantai 2 + Rooftop'];
 
-export default function EditHouseTypePage({ 
-  params 
-}: { 
-  params: Promise<{ id: string; unitId: string }> 
+export default function EditHouseTypePage({
+  params
+}: {
+  params: Promise<{ id: string; unitId: string }>
 }) {
   const resolvedParams = use(params);
-  
-  const projectIdParam = resolvedParams.id; 
-  const unitId = resolvedParams.unitId; 
+
+  const projectIdParam = resolvedParams.id;
+  const unitId = resolvedParams.unitId;
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
@@ -28,10 +28,10 @@ export default function EditHouseTypePage({
   const [typeName, setTypeName] = useState('');
   const [buildingType, setBuildingType] = useState('');
   const [category, setCategory] = useState('Komersil');
-  const [floorInfo, setFloorInfo] = useState('Lantai 1'); 
-  const [isSoldOut, setIsSoldOut] = useState(false);     
+  const [floorInfo, setFloorInfo] = useState('Lantai 1');
+  const [isSoldOut, setIsSoldOut] = useState(false);
   const [specs, setSpecs] = useState('');
-  
+
   const [rawPriceInput, setRawPriceInput] = useState('');
   const [formattedPrice, setFormattedPrice] = useState('');
 
@@ -53,7 +53,7 @@ export default function EditHouseTypePage({
 
     const num = Number(value);
     let jutaValue = num;
-    
+
     if (num >= 1000) {
       jutaValue = Math.round(num / 1000000);
     }
@@ -104,15 +104,15 @@ export default function EditHouseTypePage({
         setTypeName(data.name || '');
         setBuildingType(data.building_type || '');
         setCategory(data.category || 'Komersil');
-        setFloorInfo(data.floor_info || 'Lantai 1'); 
-        setIsSoldOut(data.is_sold_out ?? false);     
+        setFloorInfo(data.floor_info || 'Lantai 1');
+        setIsSoldOut(data.is_sold_out ?? false);
         setSpecs(data.specs || '');
         setBedrooms(data.bedrooms ? data.bedrooms.toString() : '');
         setBathrooms(data.bathrooms ? data.bathrooms.toString() : '');
-        
+
         const existingPrice = data.price_starting || '';
         setFormattedPrice(existingPrice);
-        
+
         const extractedDigits = existingPrice.replace(/[^0-9]/g, '');
         setRawPriceInput(extractedDigits);
 
@@ -134,6 +134,7 @@ export default function EditHouseTypePage({
       let imageUrl = existingImage;
 
       if (imageFile) {
+        // 1. Upload gambar baru
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `unit_${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
@@ -149,8 +150,24 @@ export default function EditHouseTypePage({
           .getPublicUrl(filePath);
 
         imageUrl = publicUrlData.publicUrl;
+
+        // 2. (Opsional tapi disarankan) Hapus gambar lama jika ada
+        if (existingImage) {
+          try {
+            // Ambil nama file dari URL publik Supabase
+            const oldPath = existingImage.split('/').pop();
+            if (oldPath) {
+              await supabase.storage
+                .from('house-type-images')
+                .remove([oldPath]);
+            }
+          } catch (err) {
+            console.error("Gagal menghapus gambar lama di storage:", err);
+          }
+        }
       }
 
+      // 3. Update database
       const { error: updateError } = await supabase
         .from('unit_types')
         .update({
@@ -158,8 +175,8 @@ export default function EditHouseTypePage({
           name: typeName,
           building_type: buildingType,
           category: category,
-          floor_info: floorInfo,   
-          is_sold_out: isSoldOut,  
+          floor_info: floorInfo,
+          is_sold_out: isSoldOut,
           specs,
           price_starting: formattedPrice,
           bedrooms: bedrooms ? parseInt(bedrooms) : null,
@@ -190,7 +207,7 @@ export default function EditHouseTypePage({
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
-      
+
       {/* Header Halaman */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100">
         <div>
@@ -207,7 +224,7 @@ export default function EditHouseTypePage({
 
       <form onSubmit={handleUpdate} className="space-y-6">
         <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
-          
+
           <div>
             <label className="block text-sm font-bold text-slate-800 mb-2">Pilih Proyek Utama</label>
             <select
@@ -297,11 +314,10 @@ export default function EditHouseTypePage({
                       key={cat}
                       type="button"
                       onClick={() => setCategory(cat)}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-bold transition border ${
-                        isSelected
+                      className={`px-4 py-2.5 rounded-xl text-sm font-bold transition border ${isSelected
                           ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
                           : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
+                        }`}
                     >
                       {isSelected ? `✓ ${cat}` : cat}
                     </button>
@@ -316,22 +332,20 @@ export default function EditHouseTypePage({
                 <button
                   type="button"
                   onClick={() => setIsSoldOut(false)}
-                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition border ${
-                    !isSoldOut
+                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition border ${!isSoldOut
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-600/20'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   {!isSoldOut ? '✓ Available' : 'Available'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsSoldOut(true)}
-                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition border ${
-                    isSoldOut
+                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition border ${isSoldOut
                       ? 'bg-rose-600 text-white border-rose-600 shadow-lg shadow-rose-600/20'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   {isSoldOut ? '✓ Sold Out' : 'Sold Out'}
                 </button>
@@ -350,11 +364,10 @@ export default function EditHouseTypePage({
                     key={floor}
                     type="button"
                     onClick={() => setFloorInfo(floor)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition border ${
-                      isSelected
+                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition border ${isSelected
                         ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
                         : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
+                      }`}
                   >
                     {isSelected ? `✓ ${floor}` : floor}
                   </button>
@@ -366,7 +379,7 @@ export default function EditHouseTypePage({
           {/* Upload Gambar / Denah */}
           <div className="pt-2">
             <label className="block text-sm font-bold text-slate-800 mb-2">Gambar / Denah Rumah</label>
-            
+
             {existingImage && !imageFile && (
               <div className="mb-4 flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl w-fit">
                 <img src={existingImage} alt="Current Preview" className="w-20 h-14 object-cover rounded-xl border border-slate-200" />
@@ -378,11 +391,10 @@ export default function EditHouseTypePage({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-3xl cursor-pointer transition ${
-                isDragging 
-                  ? 'border-orange-500 bg-orange-50/50 scale-[1.01]' 
+              className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-3xl cursor-pointer transition ${isDragging
+                  ? 'border-orange-500 bg-orange-50/50 scale-[1.01]'
                   : 'border-slate-200 bg-slate-50 hover:bg-slate-100/60'
-              }`}
+                }`}
             >
               <div className="flex flex-col items-center justify-center p-6 text-center">
                 <p className="text-sm text-slate-600 font-medium">

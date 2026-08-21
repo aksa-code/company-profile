@@ -24,7 +24,7 @@ export default function AdminLeadsPage() {
                 .order("created_at", { ascending: false });
 
             if (error) throw error;
-            
+
             if (data) {
                 setLeads(data);
 
@@ -251,15 +251,14 @@ export default function AdminLeadsPage() {
 
                     {/* Filter Status */}
                     <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-                        {["all", "baru", "dihubungi", "closing"].map((status) => (
+                        {["all", "baru", "dihubungi", "closing", "gagal", "no respon"].map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
-                                className={`px-3 py-2 rounded-xl text-xs font-bold capitalize transition whitespace-nowrap ${
-                                    statusFilter === status
+                                className={`px-3 py-2 rounded-xl text-xs font-bold capitalize transition whitespace-nowrap ${statusFilter === status
                                         ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
                                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                                }`}
+                                    }`}
                             >
                                 {status === "all" ? "Semua Status" : status}
                             </button>
@@ -350,7 +349,7 @@ export default function AdminLeadsPage() {
                                 ) : (
                                     filteredLeads.map((lead) => (
                                         <tr key={lead.id} className="hover:bg-slate-50/85 transition-colors">
-                                            
+
                                             {/* Unit Name */}
                                             <td className="py-4 px-4">
                                                 <div className="font-bold text-slate-900 flex items-center gap-2">
@@ -403,7 +402,7 @@ export default function AdminLeadsPage() {
                                                                 {lead.marketing} (Nonaktif)
                                                             </option>
                                                         )}
-                                                        
+
                                                         <option value="" disabled>Pilih Marketing</option>
                                                         {marketingList.map((mkt) => (
                                                             <option key={mkt} value={mkt}>{mkt}</option>
@@ -438,13 +437,12 @@ export default function AdminLeadsPage() {
                                                 <select
                                                     value={lead.status || "baru"}
                                                     onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition cursor-pointer border ${
-                                                        lead.status === 'baru' 
-                                                            ? 'bg-orange-50 text-orange-700 border-orange-200' 
-                                                            : lead.status === 'dihubungi' 
-                                                            ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                                                            : 'badge bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                    }`}
+                                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition cursor-pointer border ${lead.status === 'baru'
+                                                            ? 'bg-orange-50 text-orange-700 border-orange-200'
+                                                            : lead.status === 'dihubungi'
+                                                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                                : 'badge bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        }`}
                                                 >
                                                     <option value="baru">Baru</option>
                                                     <option value="dihubungi">Dihubungi</option>
