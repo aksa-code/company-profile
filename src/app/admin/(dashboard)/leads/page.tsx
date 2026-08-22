@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../../../lib/supabase";
+import NotificationModal from "../../../component/ui/NotificationModal"; // Sesuaikan path import komponen modal Anda
 
 export default function AdminLeadsPage() {
     const [leads, setLeads] = useState<any[]>([]);
@@ -13,6 +14,23 @@ export default function AdminLeadsPage() {
     const [marketingFilter, setMarketingFilter] = useState("all");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+
+    // State untuk kontrol NotificationModal
+    const [modalConfig, setModalConfig] = useState<{
+        isOpen: boolean;
+        type: 'success' | 'danger' | 'warning' | 'info';
+        title: string;
+        message: string;
+        confirmText?: string;
+        cancelText?: string;
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        type: 'info',
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    });
 
     // Fetch data leads dari Supabase dan sinkronkan dengan daftar marketing
     const fetchLeads = async () => {
@@ -65,7 +83,15 @@ export default function AdminLeadsPage() {
 
             setLeads(leads.map(lead => lead.id === id ? { ...lead, status: newStatus } : lead));
         } catch (err: any) {
-            alert(`Gagal memperbarui status: ${err.message}`);
+            setModalConfig({
+                isOpen: true,
+                type: 'danger',
+                title: 'Gagal Memperbarui',
+                message: `Gagal memperbarui status: ${err.message}`,
+                confirmText: 'Tutup',
+                cancelText: '',
+                onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+            });
         }
     };
 
@@ -82,31 +108,83 @@ export default function AdminLeadsPage() {
             const updatedLeads = leads.map(lead => lead.id === id ? { ...lead, marketing: newMarketing } : lead);
             setLeads(updatedLeads);
         } catch (err: any) {
-            alert(`Gagal memperbarui marketing: ${err.message}`);
+            setModalConfig({
+                isOpen: true,
+                type: 'danger',
+                title: 'Gagal Memperbarui',
+                message: `Gagal memperbarui marketing: ${err.message}`,
+                confirmText: 'Tutup',
+                cancelText: '',
+                onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+            });
         }
     };
 
     // Fungsi untuk menghapus nama marketing agar "stuck" hilang dari pilihan
-    const handleDeleteMarketing = async (mktToDelete: string) => {
-        if (!confirm(`Apakah Anda yakin ingin menghapus "${mktToDelete}" dari daftar pilihan secara permanen? Nama ini tidak akan muncul lagi di pilihan dropdown.`)) {
-            return;
+    const handleDeleteMarketing = (mktToDelete: string) => {
+        setModalConfig({
+            isOpen: true,
+            type: 'danger',
+            title: 'Hapus Marketing',
+            message: `Apakah Anda yakin ingin menghapus "${mktToDelete}" dari daftar pilihan secara permanen? Nama ini tidak akan muncul lagi di pilihan dropdown.`,
+            confirmText: 'Ya, Hapus',
+            cancelText: 'Batal',
+            onConfirm: () => {
+                // Ambil data yang sudah pernah dihapus dari localStorage, lalu tambahkan yang baru
+                const deletedMarketing: string[] = JSON.parse(localStorage.getItem("deleted_marketing_list") || "[]");
+                if (!deletedMarketing.includes(mktToDelete)) {
+                    deletedMarketing.push(mktToDelete);
+                    localStorage.setItem("deleted_marketing_list", JSON.stringify(deletedMarketing));
+                }
+
+                // Perbarui state list lokal agar langsung hilang dari layar
+                setMarketingList(marketingList.filter(mkt => mkt !== mktToDelete));
+
+                if (marketingFilter === mktToDelete) {
+                    setMarketingFilter("all");
+                }
+
+                setModalConfig({
+                    isOpen: true,
+                    type: 'success',
+                    title: 'Berhasil',
+                    message: `Marketing "${mktToDelete}" berhasil dihapus dan disembunyikan dari sistem.`,
+                    confirmText: 'OK',
+                    cancelText: '',
+                    onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                });
+            }
+        });
+    };
+
+    // Fungsi untuk menambah marketing baru
+    const handleAddMarketingPrompt = () => {
+        const newName = prompt("Masukkan nama marketing / PIC baru:");
+        if (newName && newName.trim() !== "") {
+            const trimmed = newName.trim();
+            if (!marketingList.includes(trimmed)) {
+                setMarketingList([...marketingList, trimmed]);
+                setModalConfig({
+                    isOpen: true,
+                    type: 'success',
+                    title: 'Berhasil',
+                    message: `Marketing "${trimmed}" berhasil ditambahkan ke daftar pilihan.`,
+                    confirmText: 'OK',
+                    cancelText: '',
+                    onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                });
+            } else {
+                setModalConfig({
+                    isOpen: true,
+                    type: 'warning',
+                    title: 'Peringatan',
+                    message: "Marketing tersebut sudah ada dalam daftar.",
+                    confirmText: 'OK',
+                    cancelText: '',
+                    onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                });
+            }
         }
-
-        // Ambil data yang sudah pernah dihapus dari localStorage, lalu tambahkan yang baru
-        const deletedMarketing: string[] = JSON.parse(localStorage.getItem("deleted_marketing_list") || "[]");
-        if (!deletedMarketing.includes(mktToDelete)) {
-            deletedMarketing.push(mktToDelete);
-            localStorage.setItem("deleted_marketing_list", JSON.stringify(deletedMarketing));
-        }
-
-        // Perbarui state list lokal agar langsung hilang dari layar
-        setMarketingList(marketingList.filter(mkt => mkt !== mktToDelete));
-
-        if (marketingFilter === mktToDelete) {
-            setMarketingFilter("all");
-        }
-
-        alert(`Marketing "${mktToDelete}" berhasil dihapus dan disembunyikan dari sistem.`);
     };
 
     // Fungsi untuk export ke file CSV / Spreadsheet
@@ -197,18 +275,7 @@ export default function AdminLeadsPage() {
                         ))
                     )}
                     <button
-                        onClick={() => {
-                            const newName = prompt("Masukkan nama marketing / PIC baru:");
-                            if (newName && newName.trim() !== "") {
-                                const trimmed = newName.trim();
-                                if (!marketingList.includes(trimmed)) {
-                                    setMarketingList([...marketingList, trimmed]);
-                                    alert(`Marketing "${trimmed}" berhasil ditambahkan ke daftar pilihan.`);
-                                } else {
-                                    alert("Marketing tersebut sudah ada dalam daftar.");
-                                }
-                            }
-                        }}
+                        onClick={handleAddMarketingPrompt}
                         className="inline-flex items-center gap-1 bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-3 py-1.5 rounded-xl text-xs font-bold transition"
                     >
                         + Tambah Marketing
@@ -256,9 +323,9 @@ export default function AdminLeadsPage() {
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
                                 className={`px-3 py-2 rounded-xl text-xs font-bold capitalize transition whitespace-nowrap ${statusFilter === status
-                                        ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
-                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                                    }`}
+                                    ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
+                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                }`}
                             >
                                 {status === "all" ? "Semua Status" : status}
                             </button>
@@ -396,7 +463,6 @@ export default function AdminLeadsPage() {
                                                         onChange={(e) => handleMarketingChange(lead.id, e.target.value)}
                                                         className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                                                     >
-                                                        {/* Jika nama marketing tidak ada di list aktif (karena sudah dihapus/dinonaktifkan), tampilkan sebagai status nonaktif */}
                                                         {!marketingList.includes(lead.marketing) && lead.marketing && (
                                                             <option value={lead.marketing} className="text-rose-600 font-bold">
                                                                 {lead.marketing} (Nonaktif)
@@ -409,7 +475,6 @@ export default function AdminLeadsPage() {
                                                         ))}
                                                     </select>
 
-                                                    {/* Tombol Hapus/Nonaktifkan Marketing khusus baris ini agar tetap stuck */}
                                                     {lead.marketing && marketingList.includes(lead.marketing) && (
                                                         <button
                                                             onClick={() => handleDeleteMarketing(lead.marketing)}
@@ -440,8 +505,8 @@ export default function AdminLeadsPage() {
                                                     className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition cursor-pointer border ${lead.status === 'baru'
                                                             ? 'bg-orange-50 text-orange-700 border-orange-200'
                                                             : lead.status === 'dihubungi'
-                                                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                                                : 'badge bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                            : 'badge bg-emerald-50 text-emerald-700 border-emerald-200'
                                                         }`}
                                                 >
                                                     <option value="baru">Baru</option>
@@ -458,6 +523,18 @@ export default function AdminLeadsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Notification Modal Global */}
+            <NotificationModal
+                isOpen={modalConfig.isOpen}
+                type={modalConfig.type}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                onConfirm={modalConfig.onConfirm}
+                onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+            />
 
         </div>
     );

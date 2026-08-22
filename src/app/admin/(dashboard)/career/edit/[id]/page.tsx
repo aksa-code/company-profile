@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { getCareerById, updateCareer, CareerItem, formatRupiah } from "../../../../../../lib/careerService";
+import NotificationModal from "../../../../../component/ui/NotificationModal";
 
 export default function EditCareerPage() {
   const router = useRouter();
@@ -15,6 +16,20 @@ export default function EditCareerPage() {
   // State terpisah untuk input angka murni minimum & maksimum
   const [minSalaryInput, setMinSalaryInput] = useState("");
   const [maxSalaryInput, setMaxSalaryInput] = useState("");
+
+  // State untuk kontrol NotificationModal
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: "success" | "danger" | "warning" | "info";
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   const [formData, setFormData] = useState<CareerItem>({
     id: "",
@@ -91,10 +106,20 @@ export default function EditCareerPage() {
     e.preventDefault();
     try {
       await updateCareer(id, formData);
-      alert("Lowongan berhasil diperbarui!");
-      router.push("/admin/career");
+      setModalConfig({
+        isOpen: true,
+        type: "success",
+        title: "Berhasil!",
+        message: "Lowongan pekerjaan berhasil diperbarui.",
+        onConfirm: () => router.push("/admin/career"),
+      });
     } catch (error: any) {
-      alert("Terjadi kesalahan: " + error.message);
+      setModalConfig({
+        isOpen: true,
+        type: "danger",
+        title: "Gagal Memperbarui",
+        message: "Terjadi kesalahan: " + error.message,
+      });
     }
   };
 
@@ -121,7 +146,7 @@ export default function EditCareerPage() {
         <button
           type="button"
           onClick={() => router.push("/admin/career")}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-sm transition"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-sm transition cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -283,7 +308,7 @@ export default function EditCareerPage() {
                 <button
                   type="button"
                   onClick={() => removeArrayField(idx, "requirements")}
-                  className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition border border-transparent hover:border-red-100"
+                  className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition border border-transparent hover:border-red-100 cursor-pointer"
                   title="Hapus kualifikasi"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,7 +321,7 @@ export default function EditCareerPage() {
           <button
             type="button"
             onClick={() => addArrayField("requirements")}
-            className="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-bold bg-orange-50 hover:bg-orange-100/70 px-4 py-2 rounded-xl transition"
+            className="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-bold bg-orange-50 hover:bg-orange-100/70 px-4 py-2 rounded-xl transition cursor-pointer"
           >
             <span>+ Tambah Kualifikasi</span>
           </button>
@@ -317,7 +342,7 @@ export default function EditCareerPage() {
                 <button
                   type="button"
                   onClick={() => removeArrayField(idx, "responsibilities")}
-                  className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition border border-transparent hover:border-red-100"
+                  className="p-3 text-red-500 hover:bg-red-50 rounded-xl transition border border-transparent hover:border-red-100 cursor-pointer"
                   title="Hapus tanggung jawab"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,7 +355,7 @@ export default function EditCareerPage() {
           <button
             type="button"
             onClick={() => addArrayField("responsibilities")}
-            className="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-bold bg-orange-50 hover:bg-orange-100/70 px-4 py-2 rounded-xl transition"
+            className="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-bold bg-orange-50 hover:bg-orange-100/70 px-4 py-2 rounded-xl transition cursor-pointer"
           >
             <span>+ Tambah Tanggung Jawab</span>
           </button>
@@ -355,19 +380,33 @@ export default function EditCareerPage() {
           <button
             type="button"
             onClick={() => router.push("/admin/career")}
-            className="px-6 py-3 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-sm transition text-center"
+            className="px-6 py-3 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-semibold text-sm transition text-center cursor-pointer"
           >
             Batal
           </button>
           <button
             type="submit"
-            className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold text-sm transition shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-98 text-center"
+            className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold text-sm transition shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-98 text-center cursor-pointer"
           >
             Perbarui Lowongan
           </button>
         </div>
 
       </form>
+
+      {/* Modal Notifikasi */}
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText="OK"
+        onConfirm={() => {
+          if (modalConfig.onConfirm) modalConfig.onConfirm();
+          setModalConfig((prev) => ({ ...prev, isOpen: false }));
+        }}
+        onClose={() => setModalConfig((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

@@ -4,10 +4,28 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '../../../../lib/supabase';
+import NotificationModal from '../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
 export default function AdminNewsPage() {
   const [newsList, setNewsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // State untuk kontrol NotificationModal
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'danger' | 'warning' | 'info';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const fetchNews = async () => {
     setLoading(true);
@@ -28,20 +46,72 @@ export default function AdminNewsPage() {
     fetchNews();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus berita ini?')) return;
+  const handleDelete = (item: any) => {
+    // Tampilkan modal konfirmasi sebelum menghapus
+    setModalConfig({
+      isOpen: true,
+      type: 'danger',
+      title: 'Hapus Berita',
+      message: `Apakah Anda yakin ingin menghapus berita "${item.title}"? Tindakan ini tidak dapat dibatalkan.`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      onConfirm: async () => {
+        try {
+          // 1. Jika artikel memiliki gambar, hapus file gambar tersebut dari Supabase Storage
+          if (item.image) {
+            const oldFilePath = item.image.split('/').pop()?.split('?')[0];
+            if (oldFilePath) {
+              const { error: storageError } = await supabase.storage
+                .from('news-images')
+                .remove([oldFilePath]);
 
-    const { error } = await supabase.from('news').delete().eq('id', id);
-    if (error) {
-      alert('Gagal menghapus berita: ' + error.message);
-    } else {
-      fetchNews();
-    }
+              if (storageError) {
+                console.error('Gagal menghapus gambar dari storage:', storageError.message);
+              }
+            }
+          }
+
+          // 2. Hapus baris data berita dari database
+          const { error: deleteError } = await supabase
+            .from('news')
+            .delete()
+            .eq('id', item.id);
+
+          if (deleteError) {
+            throw new Error('Gagal menghapus data berita: ' + deleteError.message);
+          }
+
+          // Tampilkan modal sukses setelah terhapus
+          setModalConfig({
+            isOpen: true,
+            type: 'success',
+            title: 'Berhasil',
+            message: 'Berita berhasil dihapus dari sistem.',
+            confirmText: 'OK',
+            cancelText: '',
+            onConfirm: () => {
+              setModalConfig(prev => ({ ...prev, isOpen: false }));
+              fetchNews();
+            }
+          });
+        } catch (error: any) {
+          setModalConfig({
+            isOpen: true,
+            type: 'danger',
+            title: 'Gagal Menghapus',
+            message: error.message || 'Terjadi kesalahan saat menghapus berita.',
+            confirmText: 'Tutup',
+            cancelText: '',
+            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+          });
+        }
+      }
+    });
   };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
-      
+
       {/* Header Halaman */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100">
         <div>
@@ -111,7 +181,7 @@ export default function AdminNewsPage() {
                         </Link>
                         {/* Tombol Hapus */}
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDelete(item)}
                           className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-xl transition font-semibold text-xs border border-red-200/60"
                         >
                           Hapus
@@ -125,6 +195,18 @@ export default function AdminNewsPage() {
           </div>
         </div>
       )}
+
+      {/* Notification Modal Global */}
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        onConfirm={modalConfig.onConfirm}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

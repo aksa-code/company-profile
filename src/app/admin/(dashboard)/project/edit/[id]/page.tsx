@@ -5,6 +5,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../lib/supabase';
 import Link from 'next/link';
+import NotificationModal from '../../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
 const LIST_BANK_KPR = ["BCA", "BRI", "BNI", "BSI", "BTN", "Mandiri", "BSN"];
 
@@ -35,8 +36,24 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const [facility2, setFacility2] = useState('');
   const [facility3, setFacility3] = useState('');
 
-  // State untuk efek visual Drag and Drop
   const [isDragging, setIsDragging] = useState(false);
+
+  // State untuk kontrol NotificationModal
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'danger' | 'warning' | 'info';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     async function fetchProjectDetail() {
@@ -47,8 +64,18 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         .single();
 
       if (error) {
-        alert('Gagal mengambil data proyek: ' + error.message);
-        router.push('/admin/project');
+        setModalConfig({
+          isOpen: true,
+          type: 'danger',
+          title: 'Gagal Memuat',
+          message: 'Gagal mengambil data proyek: ' + error.message,
+          confirmText: 'Kembali',
+          cancelText: '',
+          onConfirm: () => {
+            setModalConfig(prev => ({ ...prev, isOpen: false }));
+            router.push('/admin/project');
+          }
+        });
       } else if (data) {
         setTitle(data.title || '');
         setCategory(data.category || '');
@@ -92,7 +119,6 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  // Handler Event Drag and Drop
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     setIsDragging(true);
@@ -112,7 +138,15 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
       if (droppedFile.type.startsWith('image/')) {
         setImageFile(droppedFile);
       } else {
-        alert('Harap unggah file berformat gambar!');
+        setModalConfig({
+          isOpen: true,
+          type: 'warning',
+          title: 'Format Tidak Valid',
+          message: 'Harap unggah file berformat gambar!',
+          confirmText: 'Tutup',
+          cancelText: '',
+          onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+        });
       }
     }
   };
@@ -124,22 +158,39 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     try {
       let imageUrl = existingImage;
 
+      // Jika admin mengupload gambar baru
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 
+        // 1. Upload gambar baru ke bucket projects-images
         const { error: uploadError } = await supabase.storage
           .from('projects-images')
           .upload(filePath, imageFile);
 
         if (uploadError) throw new Error('Gagal upload gambar: ' + uploadError.message);
 
+        // 2. Dapatkan public URL untuk gambar baru
         const { data: publicUrlData } = supabase.storage
           .from('projects-images')
           .getPublicUrl(filePath);
 
         imageUrl = publicUrlData.publicUrl;
+
+        // 3. Hapus gambar lama dari storage jika sebelumnya ada gambar
+        if (existingImage) {
+          const oldFileName = existingImage.split('/').pop()?.split('?')[0];
+          if (oldFileName) {
+            const { error: removeError } = await supabase.storage
+              .from('projects-images')
+              .remove([oldFileName]);
+
+            if (removeError) {
+              console.error('Gagal menghapus gambar lama di storage:', removeError.message);
+            }
+          }
+        }
       }
 
       const facilities = [facility1, facility2, facility3].filter(Boolean);
@@ -150,6 +201,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         keamanan: security,
       };
 
+      // 4. Update data ke database Supabase
       const { error: updateError } = await supabase
         .from('projects')
         .update({
@@ -169,11 +221,29 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
 
       if (updateError) throw new Error('Gagal memperbarui proyek: ' + updateError.message);
 
-      alert('Proyek berhasil diperbarui!');
-      router.push('/admin/project');
-      router.refresh();
+      setModalConfig({
+        isOpen: true,
+        type: 'success',
+        title: 'Berhasil!',
+        message: 'Proyek berhasil diperbarui.',
+        confirmText: 'OK',
+        cancelText: '',
+        onConfirm: () => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          router.push('/admin/project');
+          router.refresh();
+        }
+      });
     } catch (error: any) {
-      alert(error.message);
+      setModalConfig({
+        isOpen: true,
+        type: 'danger',
+        title: 'Gagal Memperbarui',
+        message: error.message || 'Terjadi kesalahan saat memperbarui proyek.',
+        confirmText: 'Tutup',
+        cancelText: '',
+        onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+      });
     } finally {
       setSubmitting(false);
     }
@@ -379,6 +449,18 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
           </button>
         </div>
       </form>
+
+      {/* Notification Modal Global */}
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        onConfirm={modalConfig.onConfirm}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

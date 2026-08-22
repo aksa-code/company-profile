@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../lib/supabase';
 import Link from 'next/link';
+import NotificationModal from '../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
 const LIST_BANK_KPR = ["BCA", "BRI", "BNI", "BSI", "BTN", "Mandiri", "BSN"];
 
@@ -32,6 +33,23 @@ export default function CreateProjectPage() {
 
   // State untuk efek visual Drag and Drop
   const [isDragging, setIsDragging] = useState(false);
+
+  // State untuk kontrol NotificationModal
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'danger' | 'warning' | 'info';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const generateId = (text: string) => text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
 
@@ -63,7 +81,15 @@ export default function CreateProjectPage() {
       if (droppedFile.type.startsWith('image/')) {
         setImageFile(droppedFile);
       } else {
-        alert('Harap unggah file berformat gambar!');
+        setModalConfig({
+          isOpen: true,
+          type: 'warning',
+          title: 'Format Tidak Valid',
+          message: 'Harap unggah file berformat gambar!',
+          confirmText: 'Tutup',
+          cancelText: '',
+          onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+        });
       }
     }
   };
@@ -112,11 +138,29 @@ export default function CreateProjectPage() {
 
       if (insertError) throw insertError;
 
-      alert('Proyek berhasil ditambahkan!');
-      router.push('/admin/project');
-      router.refresh();
+      setModalConfig({
+        isOpen: true,
+        type: 'success',
+        title: 'Berhasil!',
+        message: 'Proyek berhasil ditambahkan.',
+        confirmText: 'OK',
+        cancelText: '',
+        onConfirm: () => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          router.push('/admin/project');
+          router.refresh();
+        }
+      });
     } catch (error: any) {
-      alert('Gagal: ' + error.message);
+      setModalConfig({
+        isOpen: true,
+        type: 'danger',
+        title: 'Gagal Menyimpan',
+        message: error.message || 'Terjadi kesalahan saat menambahkan proyek.',
+        confirmText: 'Tutup',
+        cancelText: '',
+        onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+      });
     } finally {
       setLoading(false);
     }
@@ -303,6 +347,18 @@ export default function CreateProjectPage() {
           </button>
         </div>
       </form>
+
+      {/* Notification Modal Global */}
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        onConfirm={modalConfig.onConfirm}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

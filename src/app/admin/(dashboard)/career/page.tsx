@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getCareers, deleteCareer, CareerItem } from "../../../../lib/careerService";
 import { supabase } from "../../../../lib/supabase";
+import NotificationModal from "../../../component/ui/NotificationModal";
 
 export default function AdminCareerPage() {
   const router = useRouter();
@@ -14,6 +15,22 @@ export default function AdminCareerPage() {
   // State untuk data pelamar karir
   const [applications, setApplications] = useState<any[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
+
+  // State untuk kontrol NotificationModal
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: "success" | "danger" | "warning" | "info";
+    title: string;
+    message: string;
+    showCancel?: boolean;
+    confirmText?: string;
+    onConfirm?: () => void;
+  }>({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   const fetchCareerData = async () => {
     setLoading(true);
@@ -40,16 +57,34 @@ export default function AdminCareerPage() {
     fetchApplicationsData();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Apakah Anda yakin ingin menghapus lowongan ini?")) {
-      try {
-        await deleteCareer(id);
-        alert("Lowongan berhasil dihapus!");
-        fetchCareerData();
-      } catch (error: any) {
-        alert("Gagal menghapus: " + error.message);
-      }
-    }
+  const handleDelete = (id: string) => {
+    setModalConfig({
+      isOpen: true,
+      type: "warning",
+      title: "Konfirmasi Hapus",
+      message: "Apakah Anda yakin ingin menghapus lowongan ini dari sistem?",
+      showCancel: true,
+      confirmText: "Hapus",
+      onConfirm: async () => {
+        try {
+          await deleteCareer(id);
+          setModalConfig({
+            isOpen: true,
+            type: "success",
+            title: "Berhasil!",
+            message: "Lowongan berhasil dihapus.",
+            onConfirm: () => fetchCareerData(),
+          });
+        } catch (error: any) {
+          setModalConfig({
+            isOpen: true,
+            type: "danger",
+            title: "Gagal Menghapus",
+            message: "Terjadi kesalahan: " + error.message,
+          });
+        }
+      },
+    });
   };
 
   const handleUpdateAppStatus = async (appId: string, newStatus: string) => {
@@ -59,9 +94,20 @@ export default function AdminCareerPage() {
       .eq("id", appId);
 
     if (error) {
-      alert("Gagal memperbarui status: " + error.message);
+      setModalConfig({
+        isOpen: true,
+        type: "danger",
+        title: "Gagal Memperbarui",
+        message: "Gagal memperbarui status: " + error.message,
+      });
     } else {
       fetchApplicationsData();
+      setModalConfig({
+        isOpen: true,
+        type: "success",
+        title: "Berhasil",
+        message: "Status pelamar berhasil diperbarui.",
+      });
     }
   };
 
@@ -76,7 +122,7 @@ export default function AdminCareerPage() {
         </div>
         <button
           onClick={() => router.push("/admin/career/create")}
-          className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-semibold text-sm transition shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-98"
+          className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-semibold text-sm transition shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-98 cursor-pointer"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -144,13 +190,13 @@ export default function AdminCareerPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button 
                             onClick={() => router.push(`/admin/career/edit/${item.id}`)} 
-                            className="px-3 py-1.5 text-orange-600 hover:bg-orange-50 rounded-xl transition font-semibold text-xs border border-orange-200/60"
+                            className="px-3 py-1.5 text-orange-600 hover:bg-orange-50 rounded-xl transition font-semibold text-xs border border-orange-200/60 cursor-pointer"
                           >
                             Edit
                           </button>
                           <button 
                             onClick={() => handleDelete(item.id)} 
-                            className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-xl transition font-semibold text-xs border border-red-200/60"
+                            className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-xl transition font-semibold text-xs border border-red-200/60 cursor-pointer"
                           >
                             Hapus
                           </button>
@@ -204,7 +250,6 @@ export default function AdminCareerPage() {
                 ) : (
                   applications.map((app) => (
                     <tr key={app.id} className="hover:bg-slate-50/60 transition-colors">
-                      {/* Kolom Nama & WhatsApp */}
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-bold text-slate-900">{app.applicant_name || "-"}</div>
                         <div className="text-xs text-slate-500 font-medium">{app.whatsapp_number || "-"}</div>
@@ -239,7 +284,7 @@ export default function AdminCareerPage() {
                         <select
                           value={app.status}
                           onChange={(e) => handleUpdateAppStatus(app.id, e.target.value)}
-                          className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium"
+                          className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium cursor-pointer"
                         >
                           <option value="baru">Baru</option>
                           <option value="dihubungi">Dihubungi</option>
@@ -255,6 +300,21 @@ export default function AdminCareerPage() {
           </div>
         )}
       </div>
+
+      {/* Modal Notifikasi / Konfirmasi */}
+      {/* Modal Notifikasi / Konfirmasi */}
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText || "OK"}
+        onConfirm={() => {
+          if (modalConfig.onConfirm) modalConfig.onConfirm();
+          setModalConfig((prev) => ({ ...prev, isOpen: false, showCancel: false }));
+        }}
+        onClose={() => setModalConfig((prev) => ({ ...prev, isOpen: false, showCancel: false }))}
+      />
 
     </div>
   );

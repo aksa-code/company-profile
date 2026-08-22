@@ -3,8 +3,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createNews } from '../../../../../lib/newsService'; // Sesuaikan jalur import service Anda
+import { createNews } from '../../../../../lib/newsService';
 import Link from 'next/link';
+import NotificationModal from '../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
 export default function CreateNewsPage() {
   const router = useRouter();
@@ -18,18 +19,35 @@ export default function CreateNewsPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // State untuk kontrol NotificationModal
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'danger' | 'warning' | 'info';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   // Handle Drag & Drop Events
-  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
@@ -71,7 +89,6 @@ export default function CreateNewsPage() {
         .split('\n')
         .filter((paragraph) => paragraph.trim() !== '');
 
-      // Memanggil fungsi createNews yang otomatis membuat slug ID dari title
       await createNews({
         title,
         category,
@@ -81,11 +98,31 @@ export default function CreateNewsPage() {
         content: contentArray,
       });
 
-      alert('Berita berhasil ditambahkan!');
-      router.push('/admin/news');
-      router.refresh();
+      // Tampilkan modal sukses, lalu arahkan kembali saat tombol OK ditekan
+      setModalConfig({
+        isOpen: true,
+        type: 'success',
+        title: 'Berhasil!',
+        message: 'Berita baru berhasil ditambahkan dan dipublikasikan.',
+        confirmText: 'OK',
+        cancelText: '',
+        onConfirm: () => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          router.push('/admin/news');
+          router.refresh();
+        }
+      });
     } catch (error: any) {
-      alert(error.message);
+      // Tampilkan modal gagal jika terjadi error
+      setModalConfig({
+        isOpen: true,
+        type: 'danger',
+        title: 'Gagal Menyimpan',
+        message: error.message || 'Terjadi kesalahan saat menyimpan berita.',
+        confirmText: 'Tutup',
+        cancelText: '',
+        onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+      });
     } finally {
       setLoading(false);
     }
@@ -165,11 +202,13 @@ export default function CreateNewsPage() {
           <label className="block text-sm font-bold text-slate-800">
             Gambar Utama
           </label>
-          <div className="flex items-center justify-center w-full">
+          <div 
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className="w-full"
+          >
             <label
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
               className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-2xl cursor-pointer transition group ${
                 isDragging
                   ? "border-orange-500 bg-orange-50/60 scale-[1.01]"
@@ -262,6 +301,18 @@ export default function CreateNewsPage() {
         </div>
 
       </form>
+
+      {/* Notification Modal Global */}
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        onConfirm={modalConfig.onConfirm}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

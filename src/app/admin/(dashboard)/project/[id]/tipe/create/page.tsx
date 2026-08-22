@@ -5,6 +5,7 @@ import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../../lib/supabase';
 import Link from 'next/link';
+import NotificationModal from '../../../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
 const LIST_CATEGORIES = ['Komersil', 'Subsidi'];
 const LIST_FLOORS = ['Lantai 1', 'Lantai 2', 'Lantai 2 + Balkon', 'Lantai 2 + Rooftop'];
@@ -30,6 +31,23 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
   const [bathrooms, setBathrooms] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // State untuk kontrol NotificationModal
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'danger' | 'warning' | 'info';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const generateId = (text: string) => text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
 
@@ -71,7 +89,15 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
       if (droppedFile.type.startsWith('image/')) {
         setImageFile(droppedFile);
       } else {
-        alert('Harap unggah file berformat gambar!');
+        setModalConfig({
+          isOpen: true,
+          type: 'warning',
+          title: 'Format Tidak Valid',
+          message: 'Harap unggah file berformat gambar!',
+          confirmText: 'Tutup',
+          cancelText: '',
+          onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+        });
       }
     }
   };
@@ -121,11 +147,29 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
 
       if (insertError) throw new Error('Gagal menyimpan tipe rumah: ' + insertError.message);
 
-      alert('Tipe rumah berhasil ditambahkan!');
-      router.push(`/admin/project/${projectId}`);
-      router.refresh();
+      setModalConfig({
+        isOpen: true,
+        type: 'success',
+        title: 'Berhasil Ditambahkan',
+        message: 'Tipe rumah berhasil ditambahkan ke dalam sistem!',
+        confirmText: 'OK',
+        cancelText: '',
+        onConfirm: () => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          router.push(`/admin/project/${projectId}`);
+          router.refresh();
+        }
+      });
     } catch (error: any) {
-      alert(error.message);
+      setModalConfig({
+        isOpen: true,
+        type: 'danger',
+        title: 'Gagal Menyimpan',
+        message: error.message,
+        confirmText: 'Tutup',
+        cancelText: '',
+        onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+      });
     } finally {
       setLoading(false);
     }
@@ -359,6 +403,18 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
           </button>
         </div>
       </form>
+
+      {/* Notification Modal Global */}
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        onConfirm={modalConfig.onConfirm}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

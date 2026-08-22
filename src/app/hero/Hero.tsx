@@ -32,6 +32,19 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
     message: "",
   });
 
+  const [phoneError, setPhoneError] = useState("");
+  
+  // State untuk Notifikasi / Feedback UI
+  const [notification, setNotification] = useState<{
+    show: boolean;
+    type: "success" | "error";
+    message: string;
+  }>({
+    show: false,
+    type: "success",
+    message: "",
+  });
+
   useEffect(() => {
     if (allGlobalUnits.length === 0) return;
     const unitInterval = setInterval(() => {
@@ -51,11 +64,51 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
     return () => clearInterval(projectInterval);
   }, [projects.length]);
 
+  // Otomatis hilangkan notifikasi setelah 4 detik
+  useEffect(() => {
+    if (notification.show) {
+      const timer = setTimeout(() => {
+        setNotification((prev) => ({ ...prev, show: false }));
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification.show]);
+
   const currentGlobalUnit = allGlobalUnits[activeUnitIndex] || allGlobalUnits[0];
   const secondaryProject = projects[activeProjectIndex] || projects[1] || mainProject;
 
+  // Handler perubahan input nomor telepon dengan filter angka & validasi awalan 08
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, ""); // Hanya izinkan angka
+    setFormDataLeft({ ...formDataLeft, phone: val });
+
+    if (val.length > 0) {
+      if (!val.startsWith("08")) {
+        setPhoneError("Nomor WhatsApp harus diawali dengan '08'");
+      } else if (val.length < 10 || val.length > 13) {
+        setPhoneError("Panjang nomor HP antara 10 - 13 digit");
+      } else {
+        setPhoneError("");
+      }
+    } else {
+      setPhoneError("");
+    }
+  };
+
   const handleHeroSubmitLeft = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validasi final sebelum kirim
+    if (!formDataLeft.phone.startsWith("08") || formDataLeft.phone.length < 10 || formDataLeft.phone.length > 13) {
+      setPhoneError("Format nomor WhatsApp tidak valid (harus 08... dan 10-13 digit)");
+      setNotification({
+        show: true,
+        type: "error",
+        message: "Periksa kembali nomor WhatsApp Anda.",
+      });
+      return;
+    }
+
     const whatsappNumber = companyInfo?.contact?.phone || "6282145200700";
     const text = `Halo Admin Skyland, saya ${formDataLeft.name} tertarik dengan penawaran properti. Pesan: "${formDataLeft.message}" (No. HP/WA: ${formDataLeft.phone})`;
 
@@ -73,16 +126,35 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
 
       if (error) {
         console.error("Gagal menyimpan lead hero ke Supabase:", error.message);
+        setNotification({
+          show: true,
+          type: "error",
+          message: "Gagal menyimpan data ke sistem, namun Anda tetap diarahkan ke WhatsApp.",
+        });
+      } else {
+        setNotification({
+          show: true,
+          type: "success",
+          message: "Berhasil! Mengarahkan Anda ke WhatsApp Admin...",
+        });
       }
     } catch (err) {
       console.error("Terjadi kesalahan koneksi database:", err);
+      setNotification({
+        show: true,
+        type: "error",
+        message: "Kesalahan jaringan database.",
+      });
     }
 
-    // Buka WhatsApp Marketing Hotline
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank");
+    // Buka WhatsApp Marketing Hotline setelah jeda singkat agar notifikasi terbaca
+    setTimeout(() => {
+      window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank");
+    }, 800);
     
     // Reset form
     setFormDataLeft({ name: "", phone: "", message: "" });
+    setPhoneError("");
   };
 
   const activeProjectsCount = projects.filter((p) => p.statusBadge !== "Sold").length;
@@ -197,7 +269,32 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
                 </Link>
               )}
               
-              <div className="bg-gradient-to-br from-gray-950/90 via-gray-900/90 to-gray-950/90 border border-gray-800/90 p-3.5 sm:p-4 rounded-2xl backdrop-blur-xl shadow-xl h-[195px] flex flex-col justify-between">
+              <div className="relative bg-gradient-to-br from-gray-950/90 via-gray-900/90 to-gray-950/90 border border-gray-800/90 p-3.5 sm:p-4 rounded-2xl backdrop-blur-xl shadow-xl h-[195px] flex flex-col justify-between overflow-hidden">
+                
+                {/* Komponen Notifikasi / Toast Interaktif */}
+                <AnimatePresence>
+                  {notification.show && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className={`absolute inset-x-2 top-2 z-30 p-2 rounded-xl text-xs font-medium flex items-center justify-between shadow-lg backdrop-blur-md ${
+                        notification.type === "success" 
+                          ? "bg-emerald-500/90 text-white border border-emerald-400/30" 
+                          : "bg-red-500/90 text-white border border-red-400/30"
+                      }`}
+                    >
+                      <span className="truncate pr-2">{notification.message}</span>
+                      <button 
+                        onClick={() => setNotification((prev) => ({ ...prev, show: false }))}
+                        className="text-white/80 hover:text-white font-bold text-sm px-1"
+                      >
+                        ×
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="flex items-center justify-between border-b border-gray-800/80 pb-2">
                   <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
@@ -215,15 +312,25 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
                       onChange={(e) => setFormDataLeft({ ...formDataLeft, name: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl bg-gray-950/80 border border-gray-800/80 focus:outline-none focus:border-orange-500 text-xs sm:text-sm text-white placeholder-gray-500 transition-all shadow-inner"
                     />
-                    <input
-                      type="tel"
-                      required
-                      placeholder="No. WhatsApp"
-                      value={formDataLeft.phone}
-                      onChange={(e) => setFormDataLeft({ ...formDataLeft, phone: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-gray-950/80 border border-gray-800/80 focus:outline-none focus:border-orange-500 text-xs sm:text-sm text-white placeholder-gray-500 transition-all shadow-inner"
-                    />
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        required
+                        maxLength={13}
+                        placeholder="No. WhatsApp (08...)"
+                        value={formDataLeft.phone}
+                        onChange={handlePhoneChange}
+                        className={`w-full px-3 py-2 rounded-xl bg-gray-950/80 border ${
+                          phoneError ? "border-red-500" : "border-gray-800/80"
+                        } focus:outline-none focus:border-orange-500 text-xs sm:text-sm text-white placeholder-gray-500 transition-all shadow-inner`}
+                      />
+                    </div>
                   </div>
+
+                  {phoneError && (
+                    <p className="text-[10px] text-red-400 font-medium px-1 truncate">{phoneError}</p>
+                  )}
+
                   <div className="flex gap-2">
                     <input
                       type="text"

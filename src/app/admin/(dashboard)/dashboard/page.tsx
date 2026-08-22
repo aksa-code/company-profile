@@ -4,11 +4,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
+import NotificationModal from "../../../component/ui/NotificationModal"; // Sesuaikan path import modal Anda
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [adminName, setAdminName] = useState("Admin");
   const [loading, setLoading] = useState(true);
+
+  // State untuk modal konfirmasi logout
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   // State untuk statistik dinamis dari database
   const [stats, setStats] = useState({
@@ -127,8 +131,8 @@ export default function AdminDashboard() {
         </div>
 
         <button
-          onClick={handleLogout}
-          className="relative z-10 shrink-0 bg-red-600/90 hover:bg-red-600 text-white px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-lg shadow-red-900/20 hover:scale-105 active:scale-95 flex items-center gap-2 border border-red-500/30"
+          onClick={() => setIsLogoutModalOpen(true)}
+          className="relative z-10 shrink-0 bg-red-600/90 hover:bg-red-600 text-white px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold transition-all shadow-lg shadow-red-900/20 hover:scale-105 active:scale-95 flex items-center gap-2 border border-red-500/30 cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -139,7 +143,6 @@ export default function AdminDashboard() {
 
       {/* Grid Kartu Statistik Interaktif */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        
         {/* Total Project */}
         <div className="bg-white p-6 rounded-3xl shadow-xl shadow-slate-100 border border-slate-100 hover:border-orange-200 transition-all group">
           <div className="flex items-center justify-between mb-4">
@@ -211,7 +214,6 @@ export default function AdminDashboard() {
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Tanya Unit / Leads</p>
           <h3 className="text-3xl sm:text-4xl font-black text-slate-900 mt-1">{stats.leads} <span className="text-sm font-semibold text-slate-500">Orang</span></h3>
         </div>
-
       </div>
 
       {/* Bagian Tabel: Pelamar Karier Terbaru */}
@@ -338,6 +340,18 @@ export default function AdminDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Modal Konfirmasi Keluar (Logout) */}
+      <NotificationModal
+        isOpen={isLogoutModalOpen}
+        type="danger"
+        title="Keluar dari Sistem"
+        message="Apakah Anda yakin ingin keluar dari sesi admin ini? Anda harus masuk kembali untuk mengelola data."
+        confirmText="Ya, Keluar"
+        cancelText="Batal"
+        onConfirm={handleLogout}
+        onClose={() => setIsLogoutModalOpen(false)}
+      />
 
     </div>
   );

@@ -5,6 +5,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../../../lib/supabase';
 import Link from 'next/link';
+import NotificationModal from '../../../../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
 const LIST_CATEGORIES = ['Komersil', 'Subsidi'];
 const LIST_FLOORS = ['Lantai 1', 'Lantai 2', 'Lantai 2 + Balkon', 'Lantai 2 + Rooftop'];
@@ -41,6 +42,23 @@ export default function EditHouseTypePage({
   const [existingImage, setExistingImage] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // State untuk kontrol NotificationModal
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'danger' | 'warning' | 'info';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
@@ -80,7 +98,15 @@ export default function EditHouseTypePage({
       if (droppedFile.type.startsWith('image/')) {
         setImageFile(droppedFile);
       } else {
-        alert('Harap unggah file berformat gambar!');
+        setModalConfig({
+          isOpen: true,
+          type: 'warning',
+          title: 'Format Tidak Valid',
+          message: 'Harap unggah file berformat gambar!',
+          confirmText: 'Tutup',
+          cancelText: '',
+          onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+        });
       }
     }
   };
@@ -97,8 +123,18 @@ export default function EditHouseTypePage({
         .single();
 
       if (error) {
-        alert('Gagal mengambil data tipe rumah: ' + error.message);
-        router.push(`/admin/project/${projectIdParam}`);
+        setModalConfig({
+          isOpen: true,
+          type: 'danger',
+          title: 'Gagal Memuat Data',
+          message: 'Gagal mengambil data tipe rumah: ' + error.message,
+          confirmText: 'OK',
+          cancelText: '',
+          onConfirm: () => {
+            setModalConfig(prev => ({ ...prev, isOpen: false }));
+            router.push(`/admin/project/${projectIdParam}`);
+          }
+        });
       } else if (data) {
         setProjectId(data.project_id || '');
         setTypeName(data.name || '');
@@ -151,10 +187,9 @@ export default function EditHouseTypePage({
 
         imageUrl = publicUrlData.publicUrl;
 
-        // 2. (Opsional tapi disarankan) Hapus gambar lama jika ada
+        // 2. Hapus gambar lama jika ada
         if (existingImage) {
           try {
-            // Ambil nama file dari URL publik Supabase
             const oldPath = existingImage.split('/').pop();
             if (oldPath) {
               await supabase.storage
@@ -187,11 +222,29 @@ export default function EditHouseTypePage({
 
       if (updateError) throw new Error('Gagal memperbarui tipe rumah: ' + updateError.message);
 
-      alert('Tipe rumah berhasil diperbarui!');
-      router.push(`/admin/project/${projectId}`);
-      router.refresh();
+      setModalConfig({
+        isOpen: true,
+        type: 'success',
+        title: 'Berhasil Diperbarui',
+        message: 'Tipe rumah berhasil diperbarui!',
+        confirmText: 'OK',
+        cancelText: '',
+        onConfirm: () => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          router.push(`/admin/project/${projectId}`);
+          router.refresh();
+        }
+      });
     } catch (error: any) {
-      alert(error.message);
+      setModalConfig({
+        isOpen: true,
+        type: 'danger',
+        title: 'Gagal Memperbarui',
+        message: error.message,
+        confirmText: 'Tutup',
+        cancelText: '',
+        onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+      });
     } finally {
       setSubmitting(false);
     }
@@ -314,10 +367,11 @@ export default function EditHouseTypePage({
                       key={cat}
                       type="button"
                       onClick={() => setCategory(cat)}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-bold transition border ${isSelected
+                      className={`px-4 py-2.5 rounded-xl text-sm font-bold transition border ${
+                        isSelected
                           ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
                           : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                        }`}
+                      }`}
                     >
                       {isSelected ? `✓ ${cat}` : cat}
                     </button>
@@ -332,20 +386,22 @@ export default function EditHouseTypePage({
                 <button
                   type="button"
                   onClick={() => setIsSoldOut(false)}
-                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition border ${!isSoldOut
+                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition border ${
+                    !isSoldOut
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-600/20'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
+                  }`}
                 >
                   {!isSoldOut ? '✓ Available' : 'Available'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsSoldOut(true)}
-                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition border ${isSoldOut
+                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition border ${
+                    isSoldOut
                       ? 'bg-rose-600 text-white border-rose-600 shadow-lg shadow-rose-600/20'
                       : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
+                  }`}
                 >
                   {isSoldOut ? '✓ Sold Out' : 'Sold Out'}
                 </button>
@@ -364,10 +420,11 @@ export default function EditHouseTypePage({
                     key={floor}
                     type="button"
                     onClick={() => setFloorInfo(floor)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition border ${isSelected
+                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition border ${
+                      isSelected
                         ? 'bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-500/20'
                         : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
+                    }`}
                   >
                     {isSelected ? `✓ ${floor}` : floor}
                   </button>
@@ -391,10 +448,11 @@ export default function EditHouseTypePage({
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-3xl cursor-pointer transition ${isDragging
+              className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-3xl cursor-pointer transition ${
+                isDragging
                   ? 'border-orange-500 bg-orange-50/50 scale-[1.01]'
                   : 'border-slate-200 bg-slate-50 hover:bg-slate-100/60'
-                }`}
+              }`}
             >
               <div className="flex flex-col items-center justify-center p-6 text-center">
                 <p className="text-sm text-slate-600 font-medium">
@@ -452,6 +510,18 @@ export default function EditHouseTypePage({
           </button>
         </div>
       </form>
+
+      {/* Notification Modal Global */}
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        onConfirm={modalConfig.onConfirm}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

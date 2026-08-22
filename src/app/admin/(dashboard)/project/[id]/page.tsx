@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { getProjectById, Project } from '../../../../../lib/projectService';
 import { supabase } from '../../../../../lib/supabase';
 import Link from 'next/link';
+import NotificationModal from '../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -15,14 +16,41 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // State untuk kontrol NotificationModal
+  const [modalConfig, setModalConfig] = useState<{
+    isOpen: boolean;
+    type: 'success' | 'danger' | 'warning' | 'info';
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   // Fetch Data Proyek menggunakan service getProjectById
   const fetchData = async () => {
     setLoading(true);
     const data = await getProjectById(projectId);
 
     if (!data) {
-      alert('Proyek tidak ditemukan');
-      router.push('/admin/project');
+      setModalConfig({
+        isOpen: true,
+        type: 'danger',
+        title: 'Tidak Ditemukan',
+        message: 'Proyek tidak ditemukan di dalam sistem.',
+        confirmText: 'Kembali',
+        cancelText: '',
+        onConfirm: () => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          router.push('/admin/project');
+        }
+      });
       return;
     }
 
@@ -34,11 +62,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     fetchData();
   }, [projectId]);
 
-  // Fungsi Hapus Unit
-  // Fungsi Hapus Unit beserta Gambarnya di Storage
-  const handleDeleteUnit = async (unitId: string) => {
-    if (!confirm('Yakin ingin menghapus tipe unit ini?')) return;
-
+  // Fungsi Eksekusi Hapus Unit
+  const executeDeleteUnit = async (unitId: string) => {
     try {
       // 1. Ambil data unit terlebih dahulu untuk mendapatkan URL gambarnya
       const { data: unitData, error: fetchError } = await supabase
@@ -67,11 +92,45 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
       if (deleteError) throw new Error(deleteError.message);
 
-      alert('Unit berhasil dihapus!');
-      fetchData(); // Refresh data setelah hapus
+      setModalConfig({
+        isOpen: true,
+        type: 'success',
+        title: 'Berhasil Dihapus',
+        message: 'Unit berhasil dihapus dari sistem!',
+        confirmText: 'OK',
+        cancelText: '',
+        onConfirm: () => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          fetchData(); // Refresh data setelah hapus
+        }
+      });
     } catch (error: any) {
-      alert('Gagal menghapus unit: ' + error.message);
+      setModalConfig({
+        isOpen: true,
+        type: 'danger',
+        title: 'Gagal Menghapus',
+        message: 'Gagal menghapus unit: ' + error.message,
+        confirmText: 'Tutup',
+        cancelText: '',
+        onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+      });
     }
+  };
+
+  // Fungsi Pemicu Modal Konfirmasi Hapus Unit
+  const handleDeleteUnitClick = (unitId: string) => {
+    setModalConfig({
+      isOpen: true,
+      type: 'warning',
+      title: 'Konfirmasi Hapus Unit',
+      message: 'Yakin ingin menghapus tipe unit ini beserta file gambarnya?',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      onConfirm: () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+        executeDeleteUnit(unitId);
+      }
+    });
   };
 
   if (loading) {
@@ -101,6 +160,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange-500/10 text-orange-600 border border-orange-500/20">
               {project.statusBadge || project.status_badge || 'Available'}
             </span>
+
           </div>
           <p className="text-sm text-slate-500 font-medium flex items-center gap-1.5 pt-1">
             <span>📍</span> {project.location}
@@ -192,7 +252,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       Edit
                     </Link>
                     <button
-                      onClick={() => handleDeleteUnit(unit.id)}
+                      onClick={() => handleDeleteUnitClick(unit.id)}
                       className="px-3.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition"
                     >
                       Hapus
@@ -205,6 +265,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </div>
         )}
       </div>
+
+      {/* Notification Modal Global */}
+      <NotificationModal
+        isOpen={modalConfig.isOpen}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        onConfirm={modalConfig.onConfirm}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
