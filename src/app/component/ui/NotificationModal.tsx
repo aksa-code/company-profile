@@ -6,7 +6,7 @@ interface NotificationProps {
   title: string;
   message: string;
   confirmText?: string;
-  cancelText?: string;
+  cancelText?: string; // Kosongkan atau abaikan jika tidak butuh tombol batal
   onConfirm: () => void;
   onClose: () => void;
 }
@@ -17,7 +17,7 @@ export default function NotificationModal({
   title,
   message,
   confirmText = 'Ya, Lanjutkan',
-  cancelText = 'Batal',
+  cancelText,
   onConfirm,
   onClose,
 }: NotificationProps) {
@@ -65,13 +65,15 @@ export default function NotificationModal({
 
         {/* Tombol Aksi */}
         <div className="flex items-center justify-end gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-sm transition"
-          >
-            {cancelText}
-          </button>
+          {cancelText && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold text-sm transition"
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {

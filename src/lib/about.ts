@@ -53,7 +53,7 @@ export const aboutData = {
     titlePrefix: "Membangun Rumah,",
     titleHighlight: "Membangun Masa Depan",
     paragraphs: [
-      "PT. Griya Mapan Alami merupakan perusahaan property yang didirikan pada tanggal 22 November 2018 di kota Malang & telah memperoleh pengesahan Menteri Kehakiman serta SIUP. Kami telah berhasil mendirikan beberapa project residential antara lain adalah Pakis Hasanah, Skyland Sekarpuro, Skyland Pandanlandung, Skyland Arjuna, Skyland Savana dan Skybriza Pakis. Dengan semangat dan komitmen yang tinggi PT. Griya Mapan Alami akan terus berkembang dan berinovasi untuk menciptakan hunian terbaik untuk masyarakat.",
+      "PT. Griya Mapan Alami Group merupakan perusahaan property yang didirikan pada tanggal 22 November 2018 di kota Malang & telah memperoleh pengesahan Menteri Kehakiman serta SIUP. Kami telah berhasil mendirikan beberapa project residential antara lain adalah Pakis Hasanah, Skyland Sekarpuro, Skyland Pandanlandung, Skyland Arjuna, Skyland Savana dan Skybriza Pakis. Dengan semangat dan komitmen yang tinggi PT. Griya Mapan Alami akan terus berkembang dan berinovasi untuk menciptakan hunian terbaik untuk masyarakat.",
       "Di bawah brand Skyland, kami mengembangkan kawasan hunian modern yang strategis, berkualitas, dan terjangkau. Bermitra dengan BTN Syariah untuk kemudahan pembiayaan KPR.",
     ],
     cards: [
@@ -89,7 +89,7 @@ export const aboutData = {
     visionMissionSection: {
       title: "Membangun Hunian Modern dengan Standar Kualitas Tertinggi",
       description: "Sejak berdiri pada tanggal 22 November 2018, PT Griya Mapan Alami terus berinovasi dalam menyediakan kawasan perumahan yang asri, strategis, dan memiliki legalitas hukum yang terjamin (SHM) bagi keluarga Indonesia.",
-      image: "/images/About/Office.png",
+      image: "/images/About/office.png",
       vision: {
         title: "Visi",
         points: [

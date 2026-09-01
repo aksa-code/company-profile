@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "../../lib/supabase"; // Sesuaikan jalur import supabase Anda jika berbeda
+import { supabase } from "../../lib/supabase";
 
 interface HeroProps {
   projects: any[];
@@ -34,7 +34,6 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
 
   const [phoneError, setPhoneError] = useState("");
   
-  // State untuk Notifikasi / Feedback UI
   const [notification, setNotification] = useState<{
     show: boolean;
     type: "success" | "error";
@@ -64,7 +63,6 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
     return () => clearInterval(projectInterval);
   }, [projects.length]);
 
-  // Otomatis hilangkan notifikasi setelah 4 detik
   useEffect(() => {
     if (notification.show) {
       const timer = setTimeout(() => {
@@ -77,9 +75,8 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
   const currentGlobalUnit = allGlobalUnits[activeUnitIndex] || allGlobalUnits[0];
   const secondaryProject = projects[activeProjectIndex] || projects[1] || mainProject;
 
-  // Handler perubahan input nomor telepon dengan filter angka & validasi awalan 08
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, ""); // Hanya izinkan angka
+    const val = e.target.value.replace(/\D/g, "");
     setFormDataLeft({ ...formDataLeft, phone: val });
 
     if (val.length > 0) {
@@ -98,7 +95,6 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
   const handleHeroSubmitLeft = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validasi final sebelum kirim
     if (!formDataLeft.phone.startsWith("08") || formDataLeft.phone.length < 10 || formDataLeft.phone.length > 13) {
       setPhoneError("Format nomor WhatsApp tidak valid (harus 08... dan 10-13 digit)");
       setNotification({
@@ -112,20 +108,18 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
     const whatsappNumber = companyInfo?.contact?.phone || "6282145200700";
     const text = `Halo Admin Skyland, saya ${formDataLeft.name} tertarik dengan penawaran properti. Pesan: "${formDataLeft.message}" (No. HP/WA: ${formDataLeft.phone})`;
 
-    // Simpan data ke tabel 'leads' Supabase untuk Marketing Hotline
     try {
       const { error } = await supabase.from("leads").insert([
         {
           visitor_name: formDataLeft.name,
           whatsapp_number: formDataLeft.phone,
-          unit_name: formDataLeft.message, // Menyimpan isi pesan/unit diminati
+          unit_name: formDataLeft.message,
           source: "Form Hero Cepat",
           status: "baru",
         },
       ]);
 
       if (error) {
-        console.error("Gagal menyimpan lead hero ke Supabase:", error.message);
         setNotification({
           show: true,
           type: "error",
@@ -139,7 +133,6 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
         });
       }
     } catch (err) {
-      console.error("Terjadi kesalahan koneksi database:", err);
       setNotification({
         show: true,
         type: "error",
@@ -147,12 +140,10 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
       });
     }
 
-    // Buka WhatsApp Marketing Hotline setelah jeda singkat agar notifikasi terbaca
     setTimeout(() => {
       window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank");
     }, 800);
     
-    // Reset form
     setFormDataLeft({ name: "", phone: "", message: "" });
     setPhoneError("");
   };
@@ -176,31 +167,30 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
 
       <div className="relative z-10 max-w-6xl mx-auto w-full my-auto flex flex-col justify-center gap-4 sm:gap-5">
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
           
-          {/* Kolom Kiri */}
+          {/* Kolom Kiri (Headline, Deskripsi, Tombol, dan Statistik dipindah ke sini) */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:col-span-5 flex flex-col justify-between h-full py-1"
+            className="lg:col-span-5 flex flex-col justify-center text-center lg:text-center space-y-6"
           >
-            <div className="space-y-4 text-center lg:text-left">
-              <h1 className="text-3xl sm:text-4xl lg:text-[3.6rem] font-extrabold tracking-tight leading-[1.08]">
-                <span className="block lg:inline">
-                  {companyInfo.hero.titlePrefix}{" "}
-                  <span className="text-orange-500">{companyInfo.hero.titleHighlight}</span>
+            <div className="space-y-4">
+              <h1 className="text-3xl sm:text-4xl lg:text-[2.5rem] font-extrabold tracking-tight leading-[1.15]">
+                <span>
+                  {companyInfo?.hero?.titlePrefix}
+                  <span className="text-orange-500">{companyInfo?.hero?.titleHighlight}</span>
+                  {companyInfo?.hero?.titleSuffix}
                 </span>
-                <span className="block lg:hidden text-white">{companyInfo.hero.titleSuffix}</span>
-                <span className="hidden lg:block">{companyInfo.hero.titleSuffix}</span>
               </h1>
 
               <p className="text-gray-300 text-xs sm:text-sm max-w-xl leading-relaxed mx-auto lg:mx-0">
-                {companyInfo.hero.description}
+                {companyInfo?.hero?.description}
               </p>
             </div>
 
-            <div className="flex flex-wrap justify-center lg:justify-start gap-3 pt-4">
+            <div className="flex flex-wrap justify-center lg:justify-center gap-3 pt-2">
               <Link
                 href="/projects"
                 className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-5 sm:px-6 py-3 sm:py-3.5 rounded-xl transition-all shadow-lg shadow-orange-500/20 flex items-center gap-2 text-xs sm:text-sm"
@@ -216,6 +206,24 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
               </Link>
             </div>
 
+            {/* Statistik Footer Hero yang Dipindah ke Kolom Kiri */}
+            <div className="w-full pt-2">
+              <div className="relative bg-gradient-to-r from-gray-900/90 via-gray-900/95 to-gray-900/90 border border-orange-500/30 backdrop-blur-xl rounded-2xl py-3.5 sm:py-4 px-4 shadow-2xl shadow-orange-500/5 grid grid-cols-3 gap-2 text-center divide-x divide-gray-800/80 overflow-hidden">
+                <div className="absolute -left-20 -top-20 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute -right-20 -bottom-20 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                {companyInfo?.hero?.stats?.map((stat: any, index: number) => (
+                  <div key={index} className="flex flex-col items-center justify-center relative z-10 px-1">
+                    <h3 className="text-base sm:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-orange-400 tracking-tight">
+                      {index === 0 ? activeProjectsCount : stat.value}
+                    </h3>
+                    <p className="text-[10px] sm:text-xs font-medium text-gray-300 mt-0.5 tracking-wide">
+                      {stat.label}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </motion.div>
 
           {/* Kolom Kanan */}
@@ -223,7 +231,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-12 gap-3.5 relative items-center"
+            className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-12 gap-3 relative items-center"
           >
             <div className="hidden sm:flex sm:col-span-6 flex-col justify-between h-[410px]">
               {secondaryProject && (
@@ -271,7 +279,6 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
               
               <div className="relative bg-gradient-to-br from-gray-950/90 via-gray-900/90 to-gray-950/90 border border-gray-800/90 p-3.5 sm:p-4 rounded-2xl backdrop-blur-xl shadow-xl h-[195px] flex flex-col justify-between overflow-hidden">
                 
-                {/* Komponen Notifikasi / Toast Interaktif */}
                 <AnimatePresence>
                   {notification.show && (
                     <motion.div
@@ -404,30 +411,6 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
             )}
           </motion.div>
         </div>
-
-        {/* Statistik Footer Hero */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="w-full pt-1"
-        >
-          <div className="relative bg-gradient-to-r from-gray-900/90 via-gray-900/95 to-gray-900/90 border border-orange-500/30 backdrop-blur-xl rounded-2xl py-3.5 sm:py-4 px-6 shadow-2xl shadow-orange-500/5 grid grid-cols-3 gap-2 sm:gap-4 text-center divide-x divide-gray-800/80 overflow-hidden">
-            <div className="absolute -left-20 -top-20 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute -right-20 -bottom-20 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            {companyInfo.hero.stats.map((stat: any, index: number) => (
-              <div key={index} className="flex flex-col items-center justify-center relative z-10">
-                <h3 className="text-lg sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-orange-400 tracking-tight">
-                  {index === 0 ? activeProjectsCount : stat.value}
-                </h3>
-                <p className="text-[11px] sm:text-xs font-medium text-gray-300 mt-0.5 tracking-wide">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
 
       </div>
     </section>

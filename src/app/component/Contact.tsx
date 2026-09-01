@@ -87,7 +87,7 @@ export default function Contact() {
     });
 
     const customMessage = encodeURIComponent(
-      `Halo ${companyInfo.name}, perkenalkan nama saya *${fullName}*. Saya ingin berkonsultasi mengenai rumah impian.`
+      `Halo ${companyInfo.name}, perkenalkan nama saya *${fullName}*. Saya ingin berkonsultasi mengenai rumah impian (Life Starts With You).`
     );
 
     setTimeout(() => {
@@ -97,25 +97,32 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" className="py-12 px-4 sm:px-6 lg:px-8 bg-orange-500 text-white relative overflow-hidden">
+    <section id="contact" className="py-16 px-4 sm:px-6 lg:px-8 bg-orange-500 text-white relative overflow-hidden">
       <div className="absolute -top-20 -right-20 w-80 h-80 bg-orange-400/30 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-orange-600/30 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-6xl mx-auto text-center relative z-10">
-        <div className="max-w-3xl mx-auto space-y-4">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-snug">
-            Siap Mewujudkan Rumah Impian Anda bersama {companyInfo.fullName}?
-          </h2>
+        <div className="max-w-3xl mx-auto space-y-5">
+          
+          {/* Tagline dijadikan sebagai penekanan poin utama (Value Proposition Copy) */}
+          <div className="space-y-2">
+            <p className="text-orange-200 text-xs sm:text-sm font-bold tracking-widest uppercase">
+              Life Starts With You
+            </p>
+            <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-snug">
+              Siap Mewujudkan Rumah Impian Anda bersama {companyInfo.fullName}?
+            </h2>
+          </div>
 
           <p className="text-orange-100 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-            {companyInfo.description} Konsultasikan kebutuhan hunian Anda dengan tim kami.
+            Karena setiap cerita besar bermula dari langkah Anda hari ini. {companyInfo.description} Konsultasikan kebutuhan hunian terbaik Anda dengan tim kami.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-3 pt-2">
+          <div className="flex flex-wrap justify-center gap-3 pt-3">
             {/* Tombol yang membuka modal form */}
             <button
               onClick={() => setIsOpen(true)}
-              className="bg-white text-orange-600 hover:bg-orange-50 font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg shadow-orange-900/10 text-xs sm:text-sm flex items-center gap-2 cursor-pointer"
+              className="bg-white text-orange-600 hover:bg-orange-50 font-bold px-6 py-3.5 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg shadow-orange-900/10 text-xs sm:text-sm flex items-center gap-2 cursor-pointer"
             >
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -125,7 +132,7 @@ export default function Contact() {
 
             <Link
               href="/projects"
-              className="bg-orange-600/60 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-xl border border-orange-400/40 transition-all duration-300 hover:scale-105 text-xs sm:text-sm flex items-center gap-2 backdrop-blur-sm"
+              className="bg-orange-600/60 hover:bg-orange-600 text-white font-semibold px-6 py-3.5 rounded-xl border border-orange-400/40 transition-all duration-300 hover:scale-105 text-xs sm:text-sm flex items-center gap-2 backdrop-blur-sm"
             >
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -165,10 +172,13 @@ export default function Contact() {
               )}
             </AnimatePresence>
 
-            <div className="space-y-1">
+            <div className="space-y-2">
+              <div className="inline-block bg-orange-50 border border-orange-100 text-orange-600 text-[10px] font-extrabold px-3 py-1 rounded-lg uppercase tracking-wider">
+                Life Starts With You
+              </div>
               <h3 className="text-xl font-black text-slate-900">Mulai Konsultasi</h3>
               <p className="text-xs sm:text-sm text-slate-500">
-                Silakan isi data diri Anda sebelum terhubung langsung dengan tim marketing <span className="font-semibold text-slate-800">{companyInfo.fullName}</span>.
+                Wujudkan babak baru kehidupan Anda bersama tim expert <span className="font-semibold text-slate-800">{companyInfo.fullName}</span>. Silakan isi data di bawah ini.
               </p>
             </div>
 

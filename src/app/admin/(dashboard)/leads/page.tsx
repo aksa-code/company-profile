@@ -29,7 +29,7 @@ export default function AdminLeadsPage() {
         type: 'info',
         title: '',
         message: '',
-        onConfirm: () => {},
+        onConfirm: () => { },
     });
 
     // Fetch data leads dari Supabase dan sinkronkan dengan daftar marketing
@@ -254,17 +254,132 @@ export default function AdminLeadsPage() {
 
             {/* Bagian Manajemen Daftar Marketing (Tambah / Hapus) */}
             <div className="bg-white rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-100 border border-slate-100 space-y-4">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Daftar Tim Marketing Aktif</h3>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">Daftar Tim Marketing Aktif</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Kelola nama PIC atau tim marketing yang tersedia dalam sistem.</p>
+                    </div>
+
+                    {/* Form Tambah Marketing Inline yang Rapi */}
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <input
+                            type="text"
+                            id="inputNewMarketing"
+                            placeholder="Nama marketing baru..."
+                            className="bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 w-full sm:w-48 transition-all"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const inputEl = e.currentTarget;
+                                    const trimmed = inputEl.value.trim();
+
+                                    if (!trimmed) {
+                                        setModalConfig({
+                                            isOpen: true,
+                                            type: 'warning',
+                                            title: 'Perhatian',
+                                            message: 'Nama marketing tidak boleh kosong.',
+                                            confirmText: 'OK',
+                                            cancelText: '',
+                                            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                                        });
+                                        return;
+                                    }
+
+                                    if (!marketingList.includes(trimmed)) {
+                                        setMarketingList([...marketingList, trimmed]);
+                                        inputEl.value = "";
+                                        setModalConfig({
+                                            isOpen: true,
+                                            type: 'success',
+                                            title: 'Berhasil',
+                                            message: `Marketing "${trimmed}" berhasil ditambahkan.`,
+                                            confirmText: 'OK',
+                                            cancelText: '',
+                                            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                                        });
+                                    } else {
+                                        setModalConfig({
+                                            isOpen: true,
+                                            type: 'warning',
+                                            title: 'Peringatan',
+                                            message: 'Marketing tersebut sudah ada dalam daftar.',
+                                            confirmText: 'OK',
+                                            cancelText: '',
+                                            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                                        });
+                                    }
+                                }
+                            }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const inputEl = document.getElementById('inputNewMarketing') as HTMLInputElement;
+                                if (inputEl) {
+                                    const trimmed = inputEl.value.trim();
+                                    if (!trimmed) {
+                                        setModalConfig({
+                                            isOpen: true,
+                                            type: 'warning',
+                                            title: 'Perhatian',
+                                            message: 'Nama marketing tidak boleh kosong.',
+                                            confirmText: 'OK',
+                                            cancelText: '',
+                                            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                                        });
+                                        return;
+                                    }
+                                    if (!marketingList.includes(trimmed)) {
+                                        setMarketingList([...marketingList, trimmed]);
+                                        inputEl.value = "";
+                                        setModalConfig({
+                                            isOpen: true,
+                                            type: 'success',
+                                            title: 'Berhasil',
+                                            message: `Marketing "${trimmed}" berhasil ditambahkan.`,
+                                            confirmText: 'OK',
+                                            cancelText: '',
+                                            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                                        });
+                                    } else {
+                                        setModalConfig({
+                                            isOpen: true,
+                                            type: 'warning',
+                                            title: 'Peringatan',
+                                            message: 'Marketing tersebut sudah ada dalam daftar.',
+                                            confirmText: 'OK',
+                                            cancelText: '',
+                                            onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+                                        });
+                                    }
+                                }
+                            }}
+                            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-md shadow-orange-500/20 shrink-0 flex items-center gap-1 cursor-pointer"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Tambah
+                        </button>
+                    </div>
+                </div>
+
+                {/* List Badge / Pill Marketing */}
+                <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
                     {marketingList.length === 0 ? (
                         <p className="text-xs text-slate-400 italic">Belum ada marketing yang terdaftar di database.</p>
                     ) : (
                         marketingList.map((mkt) => (
-                            <div key={mkt} className="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700">
+                            <div
+                                key={mkt}
+                                className="inline-flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 shadow-2xs transition-all"
+                            >
                                 <span>{mkt}</span>
                                 <button
+                                    type="button"
                                     onClick={() => handleDeleteMarketing(mkt)}
-                                    className="text-slate-400 hover:text-rose-600 transition p-0.5 rounded-md hover:bg-rose-50"
+                                    className="text-slate-400 hover:text-rose-600 transition p-0.5 rounded-md hover:bg-rose-50 cursor-pointer"
                                     title={`Hapus ${mkt}`}
                                 >
                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,12 +389,6 @@ export default function AdminLeadsPage() {
                             </div>
                         ))
                     )}
-                    <button
-                        onClick={handleAddMarketingPrompt}
-                        className="inline-flex items-center gap-1 bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 px-3 py-1.5 rounded-xl text-xs font-bold transition"
-                    >
-                        + Tambah Marketing
-                    </button>
                 </div>
             </div>
 
@@ -325,7 +434,7 @@ export default function AdminLeadsPage() {
                                 className={`px-3 py-2 rounded-xl text-xs font-bold capitalize transition whitespace-nowrap ${statusFilter === status
                                     ? "bg-orange-500 text-white shadow-md shadow-orange-500/20"
                                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                                }`}
+                                    }`}
                             >
                                 {status === "all" ? "Semua Status" : status}
                             </button>
@@ -503,8 +612,8 @@ export default function AdminLeadsPage() {
                                                     value={lead.status || "baru"}
                                                     onChange={(e) => handleStatusChange(lead.id, e.target.value)}
                                                     className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize transition cursor-pointer border ${lead.status === 'baru'
-                                                            ? 'bg-orange-50 text-orange-700 border-orange-200'
-                                                            : lead.status === 'dihubungi'
+                                                        ? 'bg-orange-50 text-orange-700 border-orange-200'
+                                                        : lead.status === 'dihubungi'
                                                             ? 'bg-blue-50 text-blue-700 border-blue-200'
                                                             : 'badge bg-emerald-50 text-emerald-700 border-emerald-200'
                                                         }`}

@@ -87,11 +87,13 @@ export default function AdminCareerPage() {
     });
   };
 
-  const handleUpdateAppStatus = async (appId: string, newStatus: string) => {
-    const { error } = await supabase
+  const handleUpdateAppStatus = async (appId: any, newStatus: string) => {
+    // Eksekusi update ke database supabase berdasarkan id
+    const { data, error } = await supabase
       .from("career_applications")
       .update({ status: newStatus })
-      .eq("id", appId);
+      .eq("id", appId)
+      .select();
 
     if (error) {
       setModalConfig({
@@ -99,6 +101,14 @@ export default function AdminCareerPage() {
         type: "danger",
         title: "Gagal Memperbarui",
         message: "Gagal memperbarui status: " + error.message,
+      });
+    } else if (!data || data.length === 0) {
+      // Kemungkinan RLS (Row Level Security) aktif dan memblokir update, atau ID tidak ditemukan
+      setModalConfig({
+        isOpen: true,
+        type: "danger",
+        title: "Gagal Memperbarui",
+        message: "Perubahan tidak disimpan. Periksa kebijakan RLS (Row Level Security) tabel career_applications di Supabase Anda.",
       });
     } else {
       fetchApplicationsData();
@@ -236,14 +246,13 @@ export default function AdminCareerPage() {
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Posisi Dilamar</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Sumber / Platform</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Waktu Masuk</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Ubah Status</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Status Pelamar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {applications.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-slate-400 text-sm">
+                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 text-sm">
                       Belum ada data pelamar yang masuk ke database.
                     </td>
                   </tr>
@@ -269,27 +278,21 @@ export default function AdminCareerPage() {
                         {app.created_at ? new Date(app.created_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "-"}
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
-                          app.status === 'baru' ? 'bg-orange-50 text-orange-600 border border-orange-100' :
-                          app.status === 'dihubungi' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
-                          app.status === 'diterima' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                          'bg-red-50 text-red-600 border border-red-100'
-                        }`}>
-                          {app.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
                         <select
-                          value={app.status}
+                          value={app.status || "baru"}
                           onChange={(e) => handleUpdateAppStatus(app.id, e.target.value)}
-                          className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium cursor-pointer"
+                          className={`text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 font-bold cursor-pointer transition ${
+                            app.status === 'baru' ? 'bg-orange-50 text-orange-600 border border-orange-200 focus:ring-orange-500' :
+                            app.status === 'dihubungi' ? 'bg-blue-50 text-blue-600 border border-blue-200 focus:ring-blue-500' :
+                            app.status === 'diterima' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 focus:ring-emerald-500' :
+                            'bg-red-50 text-red-600 border border-red-200 focus:ring-red-500'
+                          }`}
                         >
-                          <option value="baru">Baru</option>
-                          <option value="dihubungi">Dihubungi</option>
-                          <option value="diterima">Diterima</option>
-                          <option value="ditolak">Ditolak</option>
+                          <option value="baru" className="bg-white text-slate-700">Baru</option>
+                          <option value="dihubungi" className="bg-white text-slate-700">Dihubungi</option>
+                          <option value="diterima" className="bg-white text-slate-700">Diterima</option>
+                          <option value="ditolak" className="bg-white text-slate-700">Ditolak</option>
                         </select>
                       </td>
                     </tr>
@@ -301,7 +304,6 @@ export default function AdminCareerPage() {
         )}
       </div>
 
-      {/* Modal Notifikasi / Konfirmasi */}
       {/* Modal Notifikasi / Konfirmasi */}
       <NotificationModal
         isOpen={modalConfig.isOpen}

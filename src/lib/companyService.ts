@@ -26,10 +26,10 @@ export const companyInfo = {
   },
 
   hero: {
-    titlePrefix: "Build Your",
-    titleHighlight: "Dream Home",
-    titleSuffix: "With Skyland",
-    description: "Temukan hunian eksklusif dan investasi properti terbaik di lokasi strategis Malang dan sekitarnya. Dirancang dengan standar arsitektur modern untuk kenyamanan masa depan keluarga Anda.",
+    titlePrefix: "BUILD YOUR ",
+    titleHighlight: "DREAM HOME",
+    titleSuffix: " WITH US",
+    description: "Miliki rumah hunian impian dan investasi properti dengan kualitas terbaik di kelasnya. Bersama Skyland Nusantara, wujudkan impian Anda dan keluarga sekarang juga!",
     stats: [
       { value: "10+", label: "Active Projects" },
       { value: "500+", label: "Families Served" },

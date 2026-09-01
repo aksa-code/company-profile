@@ -8,7 +8,7 @@ import Image from "next/image";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { companyInfo } from "../../lib/companyService";
-import { aboutData } from "../data/about";
+import { aboutData } from "../../lib/about";
 
 export default function About() {
   const data = aboutData.homeSection;
@@ -39,13 +39,13 @@ export default function About() {
   ];
 
   return (
-    <section id="about" className="py-10 sm:py-12 px-4 sm:px-6 lg:px-8 bg-white overflow-hidden">
+    <section id="about" className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 bg-white overflow-hidden">
       {/* Menggunakan items-stretch agar tinggi kolom kiri dan kanan menyesuaikan secara proporsional */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-stretch">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
         
-        {/* Bagian Kiri: Gambar Perumahan yang mengisi tinggi penuh kolom */}
+        {/* Bagian Kiri: Gambar Perumahan */}
         <div data-aos="fade-up" className="lg:col-span-5 relative flex flex-col">
-          <div className="relative h-full min-h-[320px] sm:min-h-[380px] w-full rounded-2xl overflow-hidden shadow-xl bg-gray-100 group flex-grow">
+          <div className="relative h-[280px] sm:h-full sm:min-h-[380px] w-full rounded-2xl overflow-hidden shadow-xl bg-gray-100 group flex-grow">
             <Image
               src={data.image}
               alt="Skyland Property Development"
@@ -55,26 +55,27 @@ export default function About() {
             />
           </div>
           
-          <div className="absolute -bottom-4 sm:-bottom-5 right-4 sm:right-[-16px] bg-gradient-to-br from-orange-400 to-orange-600 text-white p-3 sm:p-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] flex flex-col items-center justify-center min-w-[100px] sm:min-w-[120px] z-10 transition-all duration-300 hover:scale-105">
-            <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight drop-shadow-sm">
+          {/* Badge Pengalaman - Disesuaikan posisinya agar proporsional di mobile */}
+          <div className="absolute -bottom-3 right-4 sm:-bottom-5 sm:right-[-16px] bg-gradient-to-br from-orange-400 to-orange-600 text-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] flex flex-col items-center justify-center min-w-[90px] sm:min-w-[120px] z-10 transition-all duration-300 hover:scale-105">
+            <span className="text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight drop-shadow-sm">
               {data.experienceBadge.years}
             </span>
-            <span className="text-[10px] sm:text-[11px] font-medium text-orange-100 text-center mt-0.5 tracking-wide">
+            <span className="text-[9px] sm:text-[11px] font-medium text-orange-100 text-center mt-0.5 tracking-wide">
               {data.experienceBadge.label}
             </span>
           </div>
         </div>
 
         {/* Bagian Kanan: Teks & Values */}
-        <div data-aos="fade-up" data-aos-delay="200" className="lg:col-span-7 space-y-3 flex flex-col justify-between">
+        <div data-aos="fade-up" data-aos-delay="200" className="lg:col-span-7 space-y-4 flex flex-col justify-between mt-2 sm:mt-0">
           
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-snug">
+            <h2 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-snug">
               {data.titlePrefix} <span className="text-orange-500">{data.titleHighlight}</span>
             </h2>
 
-            {/* Paragraf */}
-            <div className="space-y-2 text-gray-500 text-xs sm:text-sm font-normal leading-relaxed mt-3">
+            {/* Paragraf dengan text-justify dan penyesuaian line-height mobile */}
+            <div className="space-y-2.5 text-gray-500 text-xs sm:text-sm font-normal leading-relaxed mt-3 text-justify">
               <p>{data.paragraphs[0]}</p>
               <p>{data.paragraphs[1]}</p>
             </div>
@@ -88,21 +89,21 @@ export default function About() {
             </div>
           </div>
 
-          {/* Kotak Values dengan Icon yang Berbeda-beda Tiap Card */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-3">
+          {/* Kotak Values: 1 kolom di mobile, 3 kolom di tablet/desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 sm:pt-3">
             {companyInfo.values.map((value, index) => (
               <div 
                 key={index}
                 data-aos="fade-up"
                 data-aos-delay={300 + (index * 100)}
-                className="p-3 sm:p-4 rounded-xl bg-gray-50/80 border border-gray-100/80 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-md"
+                className="p-3.5 sm:p-4 rounded-xl bg-gray-50/80 border border-gray-100/80 flex sm:flex-col items-start gap-3 sm:gap-0 transition-all duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-md"
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 shrink-0 sm:mb-3">
                   {valueIcons[index] || valueIcons[0]}
                 </div>
                 <div>
-                  <h4 className="font-bold text-gray-900 text-xs sm:text-sm mb-1">{value.title}</h4>
-                  <p className="text-gray-500 text-[10px] sm:text-[11px] font-normal leading-relaxed">
+                  <h4 className="font-bold text-gray-900 text-xs sm:text-sm mb-0.5 sm:mb-1">{value.title}</h4>
+                  <p className="text-gray-500 text-[11px] sm:text-[11px] font-normal leading-relaxed text-justify sm:text-justify">
                     {value.description}
                   </p>
                 </div>

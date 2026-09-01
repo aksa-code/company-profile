@@ -5,7 +5,7 @@ import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../../lib/supabase';
 import Link from 'next/link';
-import NotificationModal from '../../../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
+import NotificationModal from '../../../../../../component/ui/NotificationModal';
 
 const LIST_CATEGORIES = ['Komersil', 'Subsidi'];
 const LIST_FLOORS = ['Lantai 1', 'Lantai 2', 'Lantai 2 + Balkon', 'Lantai 2 + Rooftop'];
@@ -20,8 +20,8 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
   const [typeName, setTypeName] = useState('');        
   const [buildingType, setBuildingType] = useState(''); 
   const [category, setCategory] = useState('Komersil');
-  const [floorInfo, setFloorInfo] = useState('Lantai 1'); // State untuk keterangan lantai
-  const [isSoldOut, setIsSoldOut] = useState(false);     // State untuk status Sold / Available
+  const [floorInfo, setFloorInfo] = useState('Lantai 1'); 
+  const [isSoldOut, setIsSoldOut] = useState(false);     
   const [specs, setSpecs] = useState('');
   
   const [rawPriceInput, setRawPriceInput] = useState('');
@@ -29,10 +29,11 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
 
   const [bedrooms, setBedrooms] = useState('');
   const [bathrooms, setBathrooms] = useState('');
+  const [kitchen, setKitchen] = useState('1'); // State baru untuk dapur, default bernilai 1
+  
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // State untuk kontrol NotificationModal
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
     type: 'success' | 'danger' | 'warning' | 'info';
@@ -67,7 +68,7 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
       jutaValue = Math.round(num / 1000000);
     }
 
-    setFormattedPrice(`Rp ${jutaValue} Juta an saja`);
+    setFormattedPrice(`Rp ${jutaValue} Juta an`);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -135,12 +136,13 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
           name: typeName,
           building_type: buildingType,
           category: category,
-          floor_info: floorInfo,    // Disimpan ke database
-          is_sold_out: isSoldOut,   // Disimpan ke database
+          floor_info: floorInfo,    
+          is_sold_out: isSoldOut,   
           specs: specs,
           price_starting: formattedPrice,
           bedrooms: bedrooms ? parseInt(bedrooms) : null,
           bathrooms: bathrooms ? parseInt(bathrooms) : null,
+          kitchen: kitchen !== '' ? parseInt(kitchen) : 1, // Disimpan ke database
           image: imageUrl,
         },
       ]);
@@ -225,8 +227,8 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-1">
               <label className="block text-sm font-bold text-slate-800 mb-2">Harga Mulai (Ketik Angka)</label>
               <input
                 type="text"
@@ -257,6 +259,16 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
                 value={bathrooms}
                 onChange={(e) => setBathrooms(e.target.value)}
                 placeholder="0"
+                className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-800 mb-2">Dapur (Kitchen)</label>
+              <input
+                type="number"
+                value={kitchen}
+                onChange={(e) => setKitchen(e.target.value)}
+                placeholder="1"
                 className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition"
               />
             </div>

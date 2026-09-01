@@ -8,7 +8,7 @@ import { motion, Variants } from "framer-motion";
 import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
 import Contact from "../component/Contact";
-import { aboutData, businessConcept } from "../data/about";
+import { aboutData, businessConcept } from "../../lib/about";
 import { companyInfo } from "../../lib/companyService";
 
 export default function AboutPage() {

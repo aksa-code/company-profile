@@ -227,12 +227,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                     <p className="text-sm font-bold text-orange-600">Start: {unit.priceStarting || unit.price_starting}</p>
 
-                    <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 pt-1">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500 pt-1">
                       <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-                        🛏️ {unit.bedrooms || 0} Kamar Tidur
+                        🛏️ {unit.bedrooms || 0} Bedroom
                       </span>
                       <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
-                        🛁 {unit.bathrooms || 0} Kamar Mandi
+                        🛁 {unit.bathrooms || 0} Bathroom
+                      </span>
+                      <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                        🍳 {unit.kitchen ?? 1} Kitchen
                       </span>
                     </div>
 

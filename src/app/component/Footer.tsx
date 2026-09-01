@@ -26,14 +26,15 @@ export default function Footer() {
     fetchProjects();
   }, []);
 
-  // Mengambil nomor admin dengan aman dari companyInfo.contact
+  // Mengambil dan membersihkan nomor marketing hotline dari companyInfo.contact.phone
   const rawPhone = companyInfo?.contact?.phone ?? "";
-  const displayPhone = rawPhone && typeof rawPhone === "string" && rawPhone.startsWith("62")
-    ? "0" + rawPhone.slice(2)
-    : rawPhone;
+  const cleanPhoneDigits = rawPhone ? rawPhone.replace(/[\s+-]/g, "") : "";
+  const displayPhone = cleanPhoneDigits && cleanPhoneDigits.startsWith("62")
+    ? "0" + cleanPhoneDigits.slice(2)
+    : cleanPhoneDigits;
 
-  // Menggunakan nomor kontak dari companyInfo sebagai cadangan jika hrdNumber tidak tersedia
-  const rawHrdPhone = companyInfo?.contact?.phone ?? "";
+  // Mengambil dan membersihkan nomor HRD dari companyInfo.contact.hrdPhone
+  const rawHrdPhone = companyInfo?.contact?.hrdPhone ?? "";
   const cleanHrdDigits = rawHrdPhone ? rawHrdPhone.replace(/[\s+-]/g, "") : "";
   const displayHrdPhone = cleanHrdDigits && cleanHrdDigits.startsWith("62")
     ? "0" + cleanHrdDigits.slice(2)
@@ -161,7 +162,14 @@ export default function Footer() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
               </span>
-              <span>{displayPhone} (Admin)</span>
+              <a 
+                href={`https://wa.me/${cleanPhoneDigits}?text=${encodeURIComponent("Halo Skyland Property, saya ingin bertanya seputar informasi properti.")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-orange-500 transition-colors"
+              >
+                {displayPhone} (Hotline)
+              </a>
             </li>
             <li className="flex items-center gap-2.5">
               <span className="text-orange-500 flex-shrink-0">
@@ -175,7 +183,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="hover:text-orange-500 transition-colors"
               >
-                {displayHrdPhone} (HRD)
+                {displayHrdPhone} (Recruiter)
               </a>
             </li>
             <li className="flex items-center gap-2.5">
@@ -191,12 +199,11 @@ export default function Footer() {
 
       </div>
 
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center pt-5 sm:pt-6 border-t border-gray-100 text-xs sm:text-sm gap-3 md:gap-0 text-center md:text-left">
-        <p>&copy; {new Date().getFullYear()} {companyInfo.name} — All rights reserved.</p>
-        <div className="flex items-center gap-6">
-          <Link href="#" className="hover:text-gray-900 transition-colors">Privacy Policy</Link>
-          <Link href="#" className="hover:text-gray-900 transition-colors">Terms of Service</Link>
-        </div>
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center pt-5 sm:pt-6 border-t border-gray-100 text-xs sm:text-sm gap-3 md:gap-0 text-center">
+        <p>&copy; {new Date().getFullYear()} {companyInfo.fullName} — All rights reserved.</p>
+        <p className="text-gray-400 font-medium">
+          Developed by <span className="text-gray-600 font-semibold">Moreelo</span>
+        </p>
       </div>
     </footer>
   );

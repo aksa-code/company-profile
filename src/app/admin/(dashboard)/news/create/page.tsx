@@ -162,7 +162,7 @@ export default function CreateNewsPage() {
             onChange={(e) => setTitle(e.target.value)}
             required
             className="w-full border border-slate-200 rounded-xl p-3 text-sm text-slate-900 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition placeholder:text-slate-400"
-            placeholder="Contoh: Peresmian Fasilitas Baru PT Mitra Sejati Electric Bike..."
+            placeholder="Peresmian Fasilitas Baru PT Griya Mapan Alami..."
           />
         </div>
 

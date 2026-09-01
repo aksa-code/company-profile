@@ -9,6 +9,7 @@ export interface UnitType {
   category?: string;
   bedrooms?: number;
   bathrooms?: number;
+  kitchen?: number; // Ditambahkan di sini
   specs?: string;
   priceStarting?: string;
   price_starting?: string;
@@ -34,7 +35,7 @@ export interface Project {
   sub_badge?: string;
   totalUnits?: string;
   total_units?: string;
-  specsSummary?: Record<string, any>; // Ubah dari interface kaku ke Record<string, any>
+  specsSummary?: Record<string, any>; 
   specs_summary?: any;
   facilities?: string[];
   bankKPR?: string;
@@ -70,6 +71,7 @@ function mapProjectData(item: any): Project {
       ...u,
       buildingType: u.buildingType || u.building_type,
       priceStarting: u.priceStarting || u.price_starting,
+      kitchen: u.kitchen ?? 1, // Mengatur default fallback 1 jika datanya kosong dari database
       isSoldOut: u.isSoldOut ?? u.is_sold_out ?? false,
     }))
   };

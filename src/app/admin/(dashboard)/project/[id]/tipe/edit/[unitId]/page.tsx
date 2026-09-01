@@ -5,10 +5,10 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../../../lib/supabase';
 import Link from 'next/link';
-import NotificationModal from '../../../../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
+import NotificationModal from '../../../../../../../component/ui/NotificationModal';
 
 const LIST_CATEGORIES = ['Komersil', 'Subsidi'];
-const LIST_FLOORS = ['Lantai 1', 'Lantai 2', 'Lantai 2 + Balkon', 'Lantai 2 + Rooftop'];
+const LIST_FLOORS = ['1 Lantai', '2 Lantai', '2 Lantai + Balkon', '2 Lantai + Rooftop'];
 
 export default function EditHouseTypePage({
   params
@@ -38,12 +38,12 @@ export default function EditHouseTypePage({
 
   const [bedrooms, setBedrooms] = useState('');
   const [bathrooms, setBathrooms] = useState('');
+  const [kitchen, setKitchen] = useState('1'); // State baru untuk dapur
 
   const [existingImage, setExistingImage] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // State untuk kontrol NotificationModal
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
     type: 'success' | 'danger' | 'warning' | 'info';
@@ -76,7 +76,7 @@ export default function EditHouseTypePage({
       jutaValue = Math.round(num / 1000000);
     }
 
-    setFormattedPrice(`Rp ${jutaValue} Juta an saja`);
+    setFormattedPrice(`Rp ${jutaValue} Juta an`);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -145,6 +145,7 @@ export default function EditHouseTypePage({
         setSpecs(data.specs || '');
         setBedrooms(data.bedrooms ? data.bedrooms.toString() : '');
         setBathrooms(data.bathrooms ? data.bathrooms.toString() : '');
+        setKitchen(data.kitchen !== null && data.kitchen !== undefined ? data.kitchen.toString() : '1');
 
         const existingPrice = data.price_starting || '';
         setFormattedPrice(existingPrice);
@@ -170,7 +171,6 @@ export default function EditHouseTypePage({
       let imageUrl = existingImage;
 
       if (imageFile) {
-        // 1. Upload gambar baru
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `unit_${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
@@ -187,7 +187,6 @@ export default function EditHouseTypePage({
 
         imageUrl = publicUrlData.publicUrl;
 
-        // 2. Hapus gambar lama jika ada
         if (existingImage) {
           try {
             const oldPath = existingImage.split('/').pop();
@@ -202,7 +201,6 @@ export default function EditHouseTypePage({
         }
       }
 
-      // 3. Update database
       const { error: updateError } = await supabase
         .from('unit_types')
         .update({
@@ -216,6 +214,7 @@ export default function EditHouseTypePage({
           price_starting: formattedPrice,
           bedrooms: bedrooms ? parseInt(bedrooms) : null,
           bathrooms: bathrooms ? parseInt(bathrooms) : null,
+          kitchen: kitchen !== '' ? parseInt(kitchen) : 1, // Diperbarui ke database
           image: imageUrl,
         })
         .eq('id', unitId);
@@ -318,8 +317,8 @@ export default function EditHouseTypePage({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-1">
               <label className="block text-sm font-bold text-slate-800 mb-2">Harga Mulai (Ketik Angka)</label>
               <input
                 type="text"
@@ -350,6 +349,16 @@ export default function EditHouseTypePage({
                 value={bathrooms}
                 onChange={(e) => setBathrooms(e.target.value)}
                 placeholder="0"
+                className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-800 mb-2">Dapur (Kitchen)</label>
+              <input
+                type="number"
+                value={kitchen}
+                onChange={(e) => setKitchen(e.target.value)}
+                placeholder="1"
                 className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition"
               />
             </div>
