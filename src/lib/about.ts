@@ -45,7 +45,7 @@ export const businessConcept: BusinessConcept[] = [
 export const aboutData = {
   // Data untuk Section About di Beranda (Landing Page / Hero view)
   homeSection: {
-    image: "/images/about/Office 1.png",
+    image: "/images/about/kantor-depan.png",
     experienceBadge: {
       years: "7+",
       label: "Tahun Pengalaman",
@@ -89,7 +89,7 @@ export const aboutData = {
     visionMissionSection: {
       title: "Membangun Hunian Modern dengan Standar Kualitas Tertinggi",
       description: "Sejak berdiri pada tanggal 22 November 2018, PT Griya Mapan Alami terus berinovasi dalam menyediakan kawasan perumahan yang asri, strategis, dan memiliki legalitas hukum yang terjamin (SHM) bagi keluarga Indonesia.",
-      image: "/images/about/office.png",
+      image: "/images/about/resepsionis.jpeg",
       vision: {
         title: "Visi",
         points: [
