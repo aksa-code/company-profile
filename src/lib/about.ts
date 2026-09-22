@@ -89,7 +89,7 @@ export const aboutData = {
     visionMissionSection: {
       title: "Membangun Hunian Modern dengan Standar Kualitas Tertinggi",
       description: "Sejak berdiri pada tanggal 22 November 2018, PT Griya Mapan Alami terus berinovasi dalam menyediakan kawasan perumahan yang asri, strategis, dan memiliki legalitas hukum yang terjamin (SHM) bagi keluarga Indonesia.",
-      image: "/images/About/office.png",
+      image: "/images/about/office.png",
       vision: {
         title: "Visi",
         points: [

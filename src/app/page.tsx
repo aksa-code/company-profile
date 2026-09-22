@@ -14,18 +14,30 @@ import { getCompanyInfo } from "../lib/companyService";
 
 export const revalidate = 0; 
 
-// 2. Tambahkan Metadata SEO di sini
+// 2. Tambahkan Metadata SEO yang Dioptimalkan untuk Malang
 export const metadata: Metadata = {
-  title: 'Skyland Property - Properti & Perumahan Eksklusif Terbaik',
-  description: 'Temukan hunian modern dan properti impian pilihan terbaik bersama Skyland Property. Cek daftar perumahan terbaru kami sekarang.',
-  keywords: ['skyland property', 'perumahan eksklusif', 'properti pilihan', 'jual beli properti'],
+  title: 'Skyland Property - Perumahan Eksklusif & Properti Terbaik di Malang',
+  description: 'Temukan hunian modern, perumahan eksklusif, dan properti pilihan terbaik di Malang bersama Skyland Property. Cek daftar perumahan terbaru kami sekarang.',
+  keywords: [
+    'skyland property', 
+    'skyland malang', 
+    'perumahan skyland', 
+    'perumahan di malang', 
+    'properti malang', 
+    'perumahan mewah malang',
+    'jual rumah malang'
+  ],
   openGraph: {
-    title: 'Skyland Property - Properti & Perumahan Eksklusif Terbaik',
-    description: 'Temukan hunian modern dan properti impian pilihan terbaik bersama Skyland Property.',
+    title: 'Skyland Property - Perumahan Eksklusif & Properti Terbaik di Malang',
+    description: 'Temukan hunian modern, perumahan eksklusif, dan properti pilihan terbaik di Malang bersama Skyland Property.',
     url: 'https://domain-bosmu.com', // Ganti dengan domain asli dari Hostinger nanti
     siteName: 'Skyland Property',
     locale: 'id_ID',
     type: 'website',
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

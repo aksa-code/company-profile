@@ -7,16 +7,61 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 
+// --- DEFINISI INTERFACE UNTUK MENGHINDARI ERROR 'any' ---
+
+interface UnitType {
+  name: string;
+  image?: string;
+  buildingType?: string;
+  building_type?: string;
+  specs?: string;
+  priceStarting?: string;
+  price_starting?: string;
+  isSoldOut?: boolean;
+  is_sold_out?: boolean;
+  projectTitle?: string;
+  projectLocation?: string;
+}
+
+interface Project {
+  id?: string | number;
+  title: string;
+  location?: string;
+  image?: string;
+  imageCover?: string;
+  statusBadge?: string;
+  unitTypes?: UnitType[];
+}
+
+interface StatItem {
+  value: string | number;
+  label: string;
+}
+
+interface CompanyInfo {
+  hero?: {
+    titlePrefix?: string;
+    titleHighlight?: string;
+    titleSuffix?: string;
+    description?: string;
+    stats?: StatItem[];
+  };
+  contact?: {
+    phone?: string;
+  };
+}
+
 interface HeroProps {
-  projects: any[];
-  companyInfo: any;
+  projects: Project[];
+  companyInfo?: CompanyInfo;
 }
 
 export default function Hero({ projects = [], companyInfo }: HeroProps) {
+  // Kode selanjutnya tetap sama, namun sekarang sudah aman dari error 'any'
   const mainProject = projects[0];
 
-  const allGlobalUnits: any[] = projects.flatMap((project) =>
-    (project.unitTypes || []).map((unit: any) => ({
+  const allGlobalUnits: UnitType[] = projects.flatMap((project) =>
+    (project.unitTypes || []).map((unit) => ({
       ...unit,
       projectTitle: project.title,
       projectLocation: project.location,
@@ -207,21 +252,21 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
             </div>
 
             {/* Statistik Footer Hero yang Dipindah ke Kolom Kiri */}
-            <div className="w-full pt-2">
-              <div className="relative bg-gradient-to-r from-gray-900/90 via-gray-900/95 to-gray-900/90 border border-orange-500/30 backdrop-blur-xl rounded-2xl py-3.5 sm:py-4 px-4 shadow-2xl shadow-orange-500/5 grid grid-cols-3 gap-2 text-center divide-x divide-gray-800/80 overflow-hidden">
-                <div className="absolute -left-20 -top-20 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                <div className="absolute -right-20 -bottom-20 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-                {companyInfo?.hero?.stats?.map((stat: any, index: number) => (
-                  <div key={index} className="flex flex-col items-center justify-center relative z-10 px-1">
-                    <h3 className="text-base sm:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-orange-400 tracking-tight">
-                      {index === 0 ? activeProjectsCount : stat.value}
-                    </h3>
-                    <p className="text-[10px] sm:text-xs font-medium text-gray-300 mt-0.5 tracking-wide">
-                      {stat.label}
-                    </p>
-                  </div>
-                ))}
+            <div className="w-full pt-1">
+              <div className="relative bg-neutral-900/70 border border-white/10 backdrop-blur-xl rounded-2xl overflow-hidden">
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-amber-300/50 to-transparent" />
+                <div className="py-4 px-4 grid grid-cols-3 gap-2 text-center divide-x divide-white/10">
+                  {companyInfo?.hero?.stats?.map((stat: StatItem, index: number) => (
+                    <div key={index} className="flex flex-col items-center justify-center px-1">
+                      <h3 className="text-lg sm:text-xl font-semibold text-white tracking-tight">
+                        {index === 0 ? activeProjectsCount : stat.value}
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-neutral-400 mt-0.5">
+                        {stat.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>
