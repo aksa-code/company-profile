@@ -88,11 +88,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    
-      
-        
+    <html lang="id">
+      <body className={inter.variable}>
+        <VisitorTracker />
         {children}
-      
-    
+      </body>
+    </html>
   );
 }
