@@ -2,7 +2,8 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://domain-bosmu.com' // Nanti ganti domain asli
+  // Tambahkan https:// di awal domain
+  const baseUrl = 'https://skylandnusantara.com'
 
   return [
     {
