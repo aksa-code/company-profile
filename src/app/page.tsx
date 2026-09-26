@@ -51,7 +51,7 @@ export default async function Home() {
       <Hero projects={projectsData} companyInfo={companyData} />
       <About />
       <ProjectGrid />
-      <VideoSection />
+      {/* <VideoSection /> */}
       <News />
       <Career />
       <Contact /> 
