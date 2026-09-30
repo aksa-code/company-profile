@@ -6,8 +6,16 @@ import Link from 'next/link';
 import { supabase } from '../../../../lib/supabase';
 import NotificationModal from '../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
+interface NewsRow {
+  id: string;
+  title: string;
+  category?: string;
+  date?: string;
+  image?: string;
+}
+
 export default function AdminNewsPage() {
-  const [newsList, setNewsList] = useState<any[]>([]);
+  const [newsList, setNewsList] = useState<NewsRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   // State untuk kontrol NotificationModal
@@ -43,10 +51,11 @@ export default function AdminNewsPage() {
   };
 
   useEffect(() => {
-    fetchNews();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount sekali saat halaman dibuka; perilaku disengaja dan tidak diubah
+    void fetchNews();
   }, []);
 
-  const handleDelete = (item: any) => {
+  const handleDelete = (item: NewsRow) => {
     // Tampilkan modal konfirmasi sebelum menghapus
     setModalConfig({
       isOpen: true,
@@ -94,12 +103,13 @@ export default function AdminNewsPage() {
               fetchNews();
             }
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan saat menghapus berita.';
           setModalConfig({
             isOpen: true,
             type: 'danger',
             title: 'Gagal Menghapus',
-            message: error.message || 'Terjadi kesalahan saat menghapus berita.',
+            message: errMessage,
             confirmText: 'Tutup',
             cancelText: '',
             onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))

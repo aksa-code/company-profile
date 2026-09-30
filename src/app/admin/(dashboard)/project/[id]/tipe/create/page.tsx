@@ -8,7 +8,7 @@ import Link from 'next/link';
 import NotificationModal from '../../../../../../component/ui/NotificationModal';
 
 const LIST_CATEGORIES = ['Komersil', 'Subsidi'];
-const LIST_FLOORS = ['Lantai 1', 'Lantai 2', 'Lantai 2 + Balkon', 'Lantai 2 + Rooftop'];
+const LIST_FLOORS = ['1 Lantai', '2 Lantai', '2 Lantai + Balkon', '2 Lantai + Rooftop'];
 
 export default function CreateHouseTypePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -30,6 +30,7 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
   const [bedrooms, setBedrooms] = useState('');
   const [bathrooms, setBathrooms] = useState('');
   const [kitchen, setKitchen] = useState('1'); // State baru untuk dapur, default bernilai 1
+  const [carport, setCarport] = useState('1'); // State untuk carport, default bernilai 1
   
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -62,13 +63,10 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
     }
 
     const num = Number(value);
-    let jutaValue = num;
-    
-    if (num >= 1000) {
-      jutaValue = Math.round(num / 1000000);
-    }
+    // Input berupa rupiah penuh (mis. 600000000) atau nominal juta (mis. 400).
+    const jutaValue = num >= 1000000 ? Math.round(num / 1000000) : num;
 
-    setFormattedPrice(`Rp ${jutaValue} Juta an`);
+    setFormattedPrice(`Rp ${jutaValue} Juta`);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -143,6 +141,7 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
           bedrooms: bedrooms ? parseInt(bedrooms) : null,
           bathrooms: bathrooms ? parseInt(bathrooms) : null,
           kitchen: kitchen !== '' ? parseInt(kitchen) : 1, // Disimpan ke database
+          carport: carport !== '' ? parseInt(carport) : 1, // Disimpan ke database
           image: imageUrl,
         },
       ]);
@@ -162,12 +161,13 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
           router.refresh();
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
       setModalConfig({
         isOpen: true,
         type: 'danger',
         title: 'Gagal Menyimpan',
-        message: error.message,
+        message: errMessage,
         confirmText: 'Tutup',
         cancelText: '',
         onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
@@ -227,9 +227,9 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             <div className="md:col-span-1">
-              <label className="block text-sm font-bold text-slate-800 mb-2">Harga Mulai (Ketik Angka)</label>
+              <label className="block text-sm font-bold text-slate-800 mb-2">Harga Unit</label>
               <input
                 type="text"
                 value={rawPriceInput}
@@ -268,6 +268,16 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
                 type="number"
                 value={kitchen}
                 onChange={(e) => setKitchen(e.target.value)}
+                placeholder="1"
+                className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-800 mb-2">Carport</label>
+              <input
+                type="number"
+                value={carport}
+                onChange={(e) => setCarport(e.target.value)}
                 placeholder="1"
                 className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition"
               />

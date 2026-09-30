@@ -10,6 +10,11 @@ import NotificationModal from '../../../../../../../component/ui/NotificationMod
 const LIST_CATEGORIES = ['Komersil', 'Subsidi'];
 const LIST_FLOORS = ['1 Lantai', '2 Lantai', '2 Lantai + Balkon', '2 Lantai + Rooftop'];
 
+interface ProjectOption {
+  id: string;
+  title: string;
+}
+
 export default function EditHouseTypePage({
   params
 }: {
@@ -23,13 +28,13 @@ export default function EditHouseTypePage({
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
 
   const [projectId, setProjectId] = useState('');
   const [typeName, setTypeName] = useState('');
   const [buildingType, setBuildingType] = useState('');
   const [category, setCategory] = useState('Komersil');
-  const [floorInfo, setFloorInfo] = useState('Lantai 1');
+  const [floorInfo, setFloorInfo] = useState('1 Lantai');
   const [isSoldOut, setIsSoldOut] = useState(false);
   const [specs, setSpecs] = useState('');
 
@@ -39,6 +44,7 @@ export default function EditHouseTypePage({
   const [bedrooms, setBedrooms] = useState('');
   const [bathrooms, setBathrooms] = useState('');
   const [kitchen, setKitchen] = useState('1'); // State baru untuk dapur
+  const [carport, setCarport] = useState('1'); // State untuk carport
 
   const [existingImage, setExistingImage] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -70,13 +76,10 @@ export default function EditHouseTypePage({
     }
 
     const num = Number(value);
-    let jutaValue = num;
+    // Input berupa rupiah penuh (mis. 600000000) atau nominal juta (mis. 400).
+    const jutaValue = num >= 1000000 ? Math.round(num / 1000000) : num;
 
-    if (num >= 1000) {
-      jutaValue = Math.round(num / 1000000);
-    }
-
-    setFormattedPrice(`Rp ${jutaValue} Juta an`);
+    setFormattedPrice(`Rp ${jutaValue} Juta`);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -140,12 +143,13 @@ export default function EditHouseTypePage({
         setTypeName(data.name || '');
         setBuildingType(data.building_type || '');
         setCategory(data.category || 'Komersil');
-        setFloorInfo(data.floor_info || 'Lantai 1');
+        setFloorInfo(data.floor_info || '1 Lantai');
         setIsSoldOut(data.is_sold_out ?? false);
         setSpecs(data.specs || '');
         setBedrooms(data.bedrooms ? data.bedrooms.toString() : '');
         setBathrooms(data.bathrooms ? data.bathrooms.toString() : '');
         setKitchen(data.kitchen !== null && data.kitchen !== undefined ? data.kitchen.toString() : '1');
+        setCarport(data.carport !== null && data.carport !== undefined ? data.carport.toString() : '1');
 
         const existingPrice = data.price_starting || '';
         setFormattedPrice(existingPrice);
@@ -215,6 +219,7 @@ export default function EditHouseTypePage({
           bedrooms: bedrooms ? parseInt(bedrooms) : null,
           bathrooms: bathrooms ? parseInt(bathrooms) : null,
           kitchen: kitchen !== '' ? parseInt(kitchen) : 1, // Diperbarui ke database
+          carport: carport !== '' ? parseInt(carport) : 1, // Diperbarui ke database
           image: imageUrl,
         })
         .eq('id', unitId);
@@ -234,12 +239,13 @@ export default function EditHouseTypePage({
           router.refresh();
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
       setModalConfig({
         isOpen: true,
         type: 'danger',
         title: 'Gagal Memperbarui',
-        message: error.message,
+        message: errMessage,
         confirmText: 'Tutup',
         cancelText: '',
         onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
@@ -317,9 +323,9 @@ export default function EditHouseTypePage({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             <div className="md:col-span-1">
-              <label className="block text-sm font-bold text-slate-800 mb-2">Harga Mulai (Ketik Angka)</label>
+              <label className="block text-sm font-bold text-slate-800 mb-2">Harga Unit</label>
               <input
                 type="text"
                 value={rawPriceInput}
@@ -358,6 +364,16 @@ export default function EditHouseTypePage({
                 type="number"
                 value={kitchen}
                 onChange={(e) => setKitchen(e.target.value)}
+                placeholder="1"
+                className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-800 mb-2">Carport</label>
+              <input
+                type="number"
+                value={carport}
+                onChange={(e) => setCarport(e.target.value)}
                 placeholder="1"
                 className="w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-sm text-slate-800 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition"
               />
@@ -448,6 +464,7 @@ export default function EditHouseTypePage({
 
             {existingImage && !imageFile && (
               <div className="mb-4 flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl w-fit">
+                {/* eslint-disable-next-line @next/next/no-img-element -- pratinjau admin ukuran dinamis; optimasi next/image tidak diperlukan di sini */}
                 <img src={existingImage} alt="Current Preview" className="w-20 h-14 object-cover rounded-xl border border-slate-200" />
                 <span className="text-xs text-slate-500 font-medium">Gambar saat ini (akan tetap digunakan jika tidak diubah)</span>
               </div>

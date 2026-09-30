@@ -1,12 +1,24 @@
 // src/app/admin/leads/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../../../../lib/supabase";
 import NotificationModal from "../../../component/ui/NotificationModal"; // Sesuaikan path import komponen modal Anda
 
 export default function AdminLeadsPage() {
-    const [leads, setLeads] = useState<any[]>([]);
+    interface LeadRow {
+        id: number;
+        unit_name?: string;
+        visitor_name?: string;
+        customer_name?: string;
+        whatsapp_number?: string;
+        marketing: string;
+        source?: string;
+        created_at: string;
+        status?: string;
+    }
+
+    const [leads, setLeads] = useState<LeadRow[]>([]);
     const [marketingList, setMarketingList] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -33,7 +45,7 @@ export default function AdminLeadsPage() {
     });
 
     // Fetch data leads dari Supabase dan sinkronkan dengan daftar marketing
-    const fetchLeads = async () => {
+    const fetchLeads = useCallback(async () => {
         try {
             setLoading(true);
             const { data, error } = await supabase
@@ -53,7 +65,7 @@ export default function AdminLeadsPage() {
                 const uniqueMarketing = Array.from(
                     new Set(
                         data
-                            .map((lead: any) => lead.marketing)
+                            .map((lead: LeadRow) => lead.marketing)
                             .filter((mkt: string) => mkt && mkt.trim() !== "" && !deletedMarketing.includes(mkt))
                     )
                 ) as string[];
@@ -65,11 +77,12 @@ export default function AdminLeadsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
-        fetchLeads();
-    }, []);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount sekali saat halaman dibuka; perilaku disengaja dan tidak diubah
+        void fetchLeads();
+    }, [fetchLeads]);
 
     // Mengubah status prospek di database Supabase
     const handleStatusChange = async (id: number, newStatus: string) => {
@@ -82,12 +95,13 @@ export default function AdminLeadsPage() {
             if (error) throw error;
 
             setLeads(leads.map(lead => lead.id === id ? { ...lead, status: newStatus } : lead));
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const errMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang tidak diketahui';
             setModalConfig({
                 isOpen: true,
                 type: 'danger',
                 title: 'Gagal Memperbarui',
-                message: `Gagal memperbarui status: ${err.message}`,
+                message: `Gagal memperbarui status: ${errMessage}`,
                 confirmText: 'Tutup',
                 cancelText: '',
                 onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
@@ -107,12 +121,13 @@ export default function AdminLeadsPage() {
 
             const updatedLeads = leads.map(lead => lead.id === id ? { ...lead, marketing: newMarketing } : lead);
             setLeads(updatedLeads);
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const errMessage = err instanceof Error ? err.message : 'Terjadi kesalahan yang tidak diketahui';
             setModalConfig({
                 isOpen: true,
                 type: 'danger',
                 title: 'Gagal Memperbarui',
-                message: `Gagal memperbarui marketing: ${err.message}`,
+                message: `Gagal memperbarui marketing: ${errMessage}`,
                 confirmText: 'Tutup',
                 cancelText: '',
                 onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
@@ -155,36 +170,6 @@ export default function AdminLeadsPage() {
                 });
             }
         });
-    };
-
-    // Fungsi untuk menambah marketing baru
-    const handleAddMarketingPrompt = () => {
-        const newName = prompt("Masukkan nama marketing / PIC baru:");
-        if (newName && newName.trim() !== "") {
-            const trimmed = newName.trim();
-            if (!marketingList.includes(trimmed)) {
-                setMarketingList([...marketingList, trimmed]);
-                setModalConfig({
-                    isOpen: true,
-                    type: 'success',
-                    title: 'Berhasil',
-                    message: `Marketing "${trimmed}" berhasil ditambahkan ke daftar pilihan.`,
-                    confirmText: 'OK',
-                    cancelText: '',
-                    onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
-                });
-            } else {
-                setModalConfig({
-                    isOpen: true,
-                    type: 'warning',
-                    title: 'Peringatan',
-                    message: "Marketing tersebut sudah ada dalam daftar.",
-                    confirmText: 'OK',
-                    cancelText: '',
-                    onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
-                });
-            }
-        }
     };
 
     // Fungsi untuk export ke file CSV / Spreadsheet
@@ -615,12 +600,18 @@ export default function AdminLeadsPage() {
                                                         ? 'bg-orange-50 text-orange-700 border-orange-200'
                                                         : lead.status === 'dihubungi'
                                                             ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                                            : 'badge bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                            : lead.status === 'gagal'
+                                                                ? 'bg-red-50 text-red-700 border-red-200'
+                                                                : lead.status === 'no respon'
+                                                                    ? 'bg-slate-100 text-slate-600 border-slate-200'
+                                                                    : 'badge bg-emerald-50 text-emerald-700 border-emerald-200'
                                                         }`}
                                                 >
                                                     <option value="baru">Baru</option>
                                                     <option value="dihubungi">Dihubungi</option>
                                                     <option value="closing">Closing</option>
+                                                    <option value="gagal">Gagal</option>
+                                                    <option value="no respon">No Respon</option>
                                                 </select>
                                             </td>
 

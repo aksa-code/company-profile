@@ -9,7 +9,8 @@ export interface UnitType {
   category?: string;
   bedrooms?: number;
   bathrooms?: number;
-  kitchen?: number; // Ditambahkan di sini
+  kitchen?: number;
+  carport?: number;
   specs?: string;
   priceStarting?: string;
   price_starting?: string;
@@ -17,8 +18,6 @@ export interface UnitType {
   isSoldOut?: boolean;
   is_sold_out?: boolean;
 }
-
-// src/lib/projectService.ts
 
 export interface Project {
   id: string;
@@ -35,11 +34,14 @@ export interface Project {
   sub_badge?: string;
   totalUnits?: string;
   total_units?: string;
-  specsSummary?: Record<string, any>; 
-  specs_summary?: any;
-  facilities?: string[];
-  bankKPR?: string;
-  bank_kpr?: string;
+  specsSummary?: Record<string, unknown>;
+  specs_summary?: Record<string, unknown>;
+  
+  // Revisi Kolom Fasilitas & Akses
+  facilities?: string[]; // Fasilitas Kawasan (Baru)
+  access?: string[];     // Akses Strategis (Eks-facilities lama)
+  access_text?: string[]; // Cadangan jika dari DB menggunakan snake_case
+
   mapsUrl?: string;
   maps_url?: string;
   unitTypes?: UnitType[];
@@ -48,7 +50,38 @@ export interface Project {
 
 export const MARKETING_HOTLINE = "6282145200700";
 
-// Fungsi pembantu untuk membuat slug otomatis dari nama (Contoh: "Sky Light" -> "sky-light")
+// Data Statis Global untuk Keamanan, Legalitas, dan Bank KPR
+export const GLOBAL_SECURITY = "One Gate System dengan CCTV 24 Jam";
+export const GLOBAL_LEGALITY = "SHGB";
+
+export const GLOBAL_BANK_KPR = [
+  "BTN",
+  "BSI",
+  "Mandiri",
+  "BCA",
+  "BRI",
+  "BNI",
+  "BSN"
+];
+
+// Logo bank KPR dari folder public/images/bank_kpr.
+// Jika file belum tersedia, kartu logo disembunyikan (lihat BankLogo).
+const BANK_KPR_LOGO_FILES: Record<string, string> = {
+  BTN: "Group 73.png",
+  BSI: "BSI Logo.png",
+  Mandiri: "Mandiri Logo.png",
+  BCA: "Group 77.png",
+  BRI: "BRI Logo.png",
+  BNI: "BNI Logo.png",
+  BSN: "BSN Logo.png",
+};
+
+export function getBankLogoUrl(bankName: string): string {
+  const file = BANK_KPR_LOGO_FILES[bankName] ?? `${bankName}.png`;
+  return encodeURI(`/images/bank_kpr/${file}`);
+}
+
+// Fungsi pembantu untuk membuat slug otomatis dari nama
 export function generateSlug(name: string): string {
   return name
     .toLowerCase()
@@ -56,22 +89,27 @@ export function generateSlug(name: string): string {
     .replace(/(^-|-$)+/g, '');
 }
 
-function mapProjectData(item: any): Project {
+function mapProjectData(item: Project): Project {
   if (!item) return item;
   return {
     ...item,
-    imageCover: item.imageCover || item.image_cover || item.image || "/images/placeholder.png",
+    imageCover: item.imageCover || item.image_cover || item.image || "/images/placeholder.svg",
     statusBadge: item.statusBadge || item.status_badge || "Available",
     subBadge: item.subBadge || item.sub_badge,
     totalUnits: item.totalUnits || item.total_units,
     specsSummary: item.specsSummary || item.specs_summary,
-    bankKPR: item.bankKPR || item.bank_kpr,
+    
+    // Mapping untuk Fasilitas dan Akses agar aman dari format database (camelCase / snake_case)
+    facilities: item.facilities || [],
+    access: item.access || item.access_text || [],
+
     mapsUrl: item.mapsUrl || item.maps_url,
-    unitTypes: (item.unitTypes || item.unit_types || []).map((u: any) => ({
+    unitTypes: (item.unitTypes || item.unit_types || []).map((u: UnitType) => ({
       ...u,
       buildingType: u.buildingType || u.building_type,
       priceStarting: u.priceStarting || u.price_starting,
-      kitchen: u.kitchen ?? 1, // Mengatur default fallback 1 jika datanya kosong dari database
+      kitchen: u.kitchen ?? 1,
+      carport: u.carport ?? undefined,
       isSoldOut: u.isSoldOut ?? u.is_sold_out ?? false,
     }))
   };
@@ -90,7 +128,6 @@ export async function getProjects(): Promise<Project[]> {
   return (data || []).map(mapProjectData);
 }
 
-// Menambahkan alias getAllProjects yang mengarah ke getProjects agar kompatibel dengan Footer.tsx
 export async function getAllProjects(): Promise<Project[]> {
   return getProjects();
 }
@@ -110,9 +147,8 @@ export async function getProjectById(id: string): Promise<Project | null> {
   return mapProjectData(data);
 }
 
-export async function upsertUnitType(payload: any, unitId?: string) {
+export async function upsertUnitType(payload: UnitType, unitId?: string) {
   if (unitId) {
-    // Jika sedang edit, update berdasarkan unitId yang sudah ada
     const { data, error } = await supabase
       .from("unit_types")
       .update(payload)
@@ -120,7 +156,6 @@ export async function upsertUnitType(payload: any, unitId?: string) {
     if (error) throw error;
     return data;
   } else {
-    // Jika data baru, buat custom ID (slug) otomatis dari 'name' jika payload memiliki nama
     const customId = payload.id || (payload.name ? generateSlug(payload.name) : undefined);
     
     const insertPayload = {

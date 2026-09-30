@@ -3,8 +3,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import type { NewsItem } from "../../lib/newsService";
 
-export default function NewsClientHero({ initialNews, header }: { initialNews: any[]; header: any }) {
+interface NewsHeroHeader {
+  titleMain: string;
+  titleHighlight: string;
+  viewAllText: string;
+  viewAllLink: string;
+}
+
+export default function NewsClientHero({ initialNews, header }: { initialNews: NewsItem[]; header: NewsHeroHeader }) {
   return (
     <section id="news" className="py-10 sm:py-12 px-4 sm:px-6 lg:px-8 bg-white selection:bg-orange-500 selection:text-white">
       <div className="max-w-6xl mx-auto">
@@ -50,7 +58,7 @@ export default function NewsClientHero({ initialNews, header }: { initialNews: a
             >
               <div className="relative h-28 sm:h-44 w-full bg-gray-100 overflow-hidden group">
                 <Image
-                  src={item.image || "/placeholder.jpg"}
+                  src={typeof item.image === 'string' && item.image ? item.image : "/images/placeholder.svg"}
                   alt={item.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-500"

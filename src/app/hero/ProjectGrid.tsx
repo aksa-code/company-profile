@@ -27,14 +27,14 @@ export default function ProjectGrid() {
   }, []);
 
   const isScrollable = projectsData.length > 3;
+  // Duplikasi data untuk efek infinite loop otomatis di desktop
   const duplicatedProjects = isScrollable ? [...projectsData, ...projectsData] : projectsData;
 
   return (
     <section id="projects" className="py-10 sm:py-12 px-4 sm:px-6 lg:px-8 bg-white overflow-hidden selection:bg-orange-500 selection:text-white">
-      {/* Bungkus header dan carousel dalam 1 container max-w-6xl yang sama persis */}
       <div className="max-w-6xl mx-auto">
         
-        {/* Header Section dengan Animasi Masuk */}
+        {/* Header Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -58,7 +58,7 @@ export default function ProjectGrid() {
           </div>
         </motion.div>
 
-        {/* Container Carousel / Grid dengan Animasi Masuk */}
+        {/* Container Carousel */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -66,8 +66,6 @@ export default function ProjectGrid() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="relative w-full overflow-hidden py-2"
         >
-          
-          {/* Efek Gradasi Sisi Kiri & Kanan (Hanya muncul jika scrollable) */}
           {isScrollable && (
             <>
               <div className="absolute top-0 bottom-0 left-0 w-8 sm:w-12 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
@@ -84,21 +82,21 @@ export default function ProjectGrid() {
               Belum ada proyek yang tersedia.
             </div>
           ) : (
-            <div 
-              className={`w-max ${
-                isScrollable 
-                  ? "flex gap-3 sm:gap-5 animate-infinite-scroll hover:[animation-play-state:paused]" 
-                  : "grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 w-full"
-              }`}
-            >
-              {duplicatedProjects.map((project, index) => (
-                <div 
-                  key={`${project.id}-${index}`} 
-                  className={`${isScrollable ? "w-[175px] sm:w-[350px]" : "w-full"} transition-all duration-500 transform hover:scale-[1.02] hover:z-20 cursor-pointer`}
-                >
-                  <ProjectCard project={project} />
-                </div>
-              ))}
+            /* 
+              Menggunakan overflow-x-auto murni dengan touch-pan-x dan -webkit-overflow-scrolling 
+              agar gesekan jari di HP langsung merespons dengan sangat mulus (native smooth scrolling).
+            */
+            <div className="w-full overflow-x-auto scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] touch-pan-x pb-3">
+              <div className={`flex gap-2.5 sm:gap-4 w-max ${isScrollable ? "animate-auto-scroll hover:[animation-play-state:paused]" : ""}`}>
+                {duplicatedProjects.map((project, index) => (
+                  <div 
+                    key={`${project.id}-${index}`} 
+                    className="w-[190px] sm:w-[350px] shrink-0 select-none transition-transform duration-300 hover:scale-[1.02]"
+                  >
+                    <ProjectCard project={project} />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -106,40 +104,49 @@ export default function ProjectGrid() {
 
       </div>
 
-      {/* CSS Keyframes untuk Auto-Scroll (Hanya dimuat jika scrollable) */}
-      {isScrollable && (
-        <style jsx global>{`
-          @keyframes infiniteScroll {
-            0% {
-              transform: translateX(0);
-            }
-            100% {
-              transform: translateX(calc(-50% - 6px));
-            }
+      {/* CSS Keyframes & Pengaturan Touch Helper */}
+      <style jsx global>{`
+        /*
+          Loop mulus: track berisi 2 salinan konten, jadi geser sejauh
+          50% + setengah gap. Gap = 10px (mobile, gap-2.5) dan 16px (sm+, gap-4),
+          sehingga offset tiap breakpoint dibedakan agar tidak lompat tiap putaran.
+        */
+        @keyframes autoScroll {
+          0% {
+            transform: translateX(0);
           }
-
-          .animate-infinite-scroll {
-            display: flex;
-            animation: infiniteScroll 35s linear infinite;
+          100% {
+            transform: translateX(calc(-50% - 5px));
           }
+        }
 
-          .animate-infinite-scroll:hover {
-            animation-play-state: paused;
+        @keyframes autoScrollSm {
+          0% {
+            transform: translateX(0);
           }
-
-          @media (min-width: 640px) {
-            @keyframes infiniteScroll {
-              0% {
-                transform: translateX(0);
-              }
-              100% {
-                transform: translateX(calc(-50% - 10px));
-              }
-            }
+          100% {
+            transform: translateX(calc(-50% - 8px));
           }
-        `}</style>
-      )}
+        }
 
+        .animate-auto-scroll {
+          display: flex;
+          animation: autoScroll 35s linear infinite;
+        }
+
+        @media (min-width: 640px) {
+          .animate-auto-scroll {
+            animation-name: autoScrollSm;
+          }
+        }
+
+        /* Saat disentuh atau di-hover, animasi berhenti agar pengguna bisa leluasa swipe manual */
+        .animate-auto-scroll:hover,
+        .animate-auto-scroll:active,
+        .animate-auto-scroll:focus-within {
+          animation-play-state: paused;
+        }
+      `}</style>
     </section>
   );
 }

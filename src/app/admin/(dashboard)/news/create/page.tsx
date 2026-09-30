@@ -112,13 +112,14 @@ export default function CreateNewsPage() {
           router.refresh();
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan saat menyimpan berita.';
       // Tampilkan modal gagal jika terjadi error
       setModalConfig({
         isOpen: true,
         type: 'danger',
         title: 'Gagal Menyimpan',
-        message: error.message || 'Terjadi kesalahan saat menyimpan berita.',
+        message: errorMessage,
         confirmText: 'Tutup',
         cancelText: '',
         onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))

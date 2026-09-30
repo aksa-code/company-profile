@@ -1,5 +1,5 @@
 // src/app/news/[id]/page.tsx
-import { supabase } from "../../../lib/supabase";
+import { fetchNewsById } from "../../../lib/newsService";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,14 +17,15 @@ export default async function NewsDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
   const { id } = resolvedParams;
 
-  // Ambil data spesifik berdasarkan ID dari Supabase
-  const { data: news, error } = await supabase
-    .from("news")
-    .select("*")
-    .eq("id", id)
-    .single();
+  // Ambil data spesifik berdasarkan ID via service (Supabase; image = public URL Storage)
+  let news = null;
+  try {
+    news = await fetchNewsById(id);
+  } catch {
+    notFound();
+  }
 
-  if (error || !news) {
+  if (!news) {
     notFound();
   }
 
@@ -62,11 +63,11 @@ export default async function NewsDetailPage({ params }: PageProps) {
 
       {/* Konten Utama Artikel */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-8 relative z-10 space-y-6 sm:space-y-8">
-        
+
         {/* Gambar Utama */}
         <div className="relative h-56 sm:h-[450px] w-full rounded-2xl overflow-hidden shadow-xl bg-white border border-gray-100">
           <Image
-            src={news.image || "/placeholder.jpg"}
+            src={typeof news.image === 'string' && news.image ? news.image : "/images/placeholder.svg"}
             alt={news.title}
             fill
             className="object-cover"

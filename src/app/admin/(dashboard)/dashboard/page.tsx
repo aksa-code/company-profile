@@ -25,8 +25,24 @@ export default function AdminDashboard() {
   });
 
   // State untuk data tabel
-  const [recentLeads, setRecentLeads] = useState<any[]>([]);
-  const [recentApplicants, setRecentApplicants] = useState<any[]>([]);
+  interface RecentLeadRow {
+    id: string | number;
+    unit_name?: string;
+    created_at: string;
+    status?: string;
+  }
+
+  interface RecentApplicantRow {
+    id: string | number;
+    applicant_name?: string;
+    position_title?: string;
+    whatsapp_number?: string;
+    created_at: string;
+    status?: string;
+  }
+
+  const [recentLeads, setRecentLeads] = useState<RecentLeadRow[]>([]);
+  const [recentApplicants, setRecentApplicants] = useState<RecentApplicantRow[]>([]);
 
   useEffect(() => {
     async function checkAuthAndFetchData() {
@@ -288,7 +304,7 @@ export default function AdminDashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
           <div>
             <h3 className="text-lg sm:text-xl font-black text-slate-900">Aktivitas Calon Pembeli Terbaru</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Catatan interaksi saat pengunjung mengklik tombol "Tanya Unit".</p>
+            <p className="text-xs text-slate-500 mt-0.5">Catatan interaksi saat pengunjung mengklik tombol &quot;Tanya Unit&quot;.</p>
           </div>
           <span className="text-xs font-bold bg-orange-50 text-orange-700 px-3.5 py-1.5 rounded-xl border border-orange-100 shadow-sm">
             Total Leads: {recentLeads.length}

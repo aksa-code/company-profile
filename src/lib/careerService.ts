@@ -21,6 +21,22 @@ export interface CareerItem {
   glintsUrl?: string;
 }
 
+// Tipe data yang merepresentasikan struktur baris data langsung dari tabel database Supabase
+export interface CareerRow {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: string;
+  salary?: string;
+  posted_date: string;
+  is_closed: boolean;
+  description: string;
+  requirements: string[] | null;
+  responsibilities: string[] | null;
+  glints_url?: string;
+}
+
 // Nomor WhatsApp HRD
 export const hrdNumber = "6282111235001";
 
@@ -68,7 +84,7 @@ export const careerHeroData = {
 };
 
 // Mapping helper dari database row ke CareerItem TypeScript
-const mapRowToCareer = (row: any): CareerItem => ({
+const mapRowToCareer = (row: CareerRow): CareerItem => ({
   id: row.id,
   title: row.title,
   department: row.department,
@@ -84,7 +100,7 @@ const mapRowToCareer = (row: any): CareerItem => ({
 });
 
 // Mapping helper dari CareerItem ke format database row (snake_case)
-const mapCareerToRow = (item: CareerItem) => ({
+const mapCareerToRow = (item: CareerItem): CareerRow => ({
   id: item.id,
   title: item.title,
   department: item.department,
@@ -111,7 +127,8 @@ export async function getCareers(): Promise<CareerItem[]> {
     throw new Error(error.message);
   }
 
-  return (data || []).map(mapRowToCareer);
+  const rows = (data as CareerRow[]) || [];
+  return rows.map(mapRowToCareer);
 }
 
 // 2. Ambil data karier berdasarkan ID (Digunakan di halaman Edit)
@@ -127,7 +144,7 @@ export async function getCareerById(id: string): Promise<CareerItem | null> {
     return null;
   }
 
-  return data ? mapRowToCareer(data) : null;
+  return data ? mapRowToCareer(data as CareerRow) : null;
 }
 
 // 3. Tambah data karier baru (Digunakan di halaman Create)

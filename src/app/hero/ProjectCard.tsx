@@ -4,11 +4,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Project } from "../../lib/projectService";
+import { GLOBAL_BANK_KPR, getBankLogoUrl, Project } from "../../lib/projectService";
+import BankLogo from "../component/BankLogo";
 
 interface ProjectCardProps {
   project: Project;
 }
+
+// Bank KPR kini bersifat global (sama untuk semua proyek), jadi card
+// menampilkan strip logo ringkas ala halaman detail, bukan teks per-proyek.
+const BANKS_PREVIEW = GLOBAL_BANK_KPR.slice(0, 4);
+const BANKS_REMAINING = GLOBAL_BANK_KPR.length - BANKS_PREVIEW.length;
 
 export default function ProjectCard({ project }: ProjectCardProps) {
   return (
@@ -20,7 +26,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       {/* Gambar Proyek & Badge */}
       <div className="relative h-[120px] sm:h-[210px] w-full bg-gray-100 overflow-hidden">
         <Image
-          src={project.imageCover || "/images/placeholder.png"}
+          src={project.imageCover || "/images/placeholder.svg"}
           alt={project.title}
           fill
           sizes="(max-width: 640px) 175px, 340px"
@@ -30,7 +36,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         {/* Badge Atas */}
         <div className="absolute top-2 left-2 right-2 sm:top-3 sm:left-3 sm:right-3 flex justify-end items-center z-10">
           <span className={`px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold text-white backdrop-blur-md ${
-            project.statusBadge === "Sold Out" ? "bg-emerald-600/90" : "bg-orange-500/90"
+            /sold/i.test(project.statusBadge || "") ? "bg-red-500/90" : /coming|soon/i.test(project.statusBadge || "") ? "bg-amber-500/90" : "bg-orange-500/90"
           }`}>
             {project.statusBadge}
           </span>
@@ -44,13 +50,13 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                 {project.subBadge}
               </span>
             )}
-            <h3 className="text-white text-xs sm:text-base font-bold drop-shadow-md line-clamp-1 sm:line-clamp-none">
+            <h3 className="text-white text-[11px] sm:text-sm font-bold drop-shadow-md line-clamp-1">
               {project.title}
             </h3>
           </div>
           {project.totalUnits && (
             <span className="bg-black/60 backdrop-blur-md text-white text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md font-semibold">
-              {project.totalUnits}
+              {/unit/i.test(project.totalUnits) ? project.totalUnits : `${project.totalUnits} Unit`}
             </span>
           )}
         </div>
@@ -83,11 +89,29 @@ export default function ProjectCard({ project }: ProjectCardProps) {
         </div>
 
         {/* Informasi KPR & Tombol Lihat Detail */}
-        <div className="pt-2 sm:pt-2.5 border-t border-gray-100 flex items-center justify-between mt-1">
-          <span className="text-[9px] sm:text-[11px] text-gray-500 font-medium">
-            KPR: <strong className="text-gray-800">{project.bankKPR || "-"}</strong>
-          </span>
-          <span className="inline-flex items-center gap-0.5 sm:gap-1 bg-orange-500 group-hover:bg-orange-600 text-white font-semibold text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl transition-all shadow-sm shadow-orange-500/20">
+        <div className="pt-2 sm:pt-2.5 border-t border-gray-100 flex items-center justify-between gap-1.5 sm:gap-2 mt-1">
+          <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1">
+            <div className="flex items-center gap-1 sm:gap-1.5 min-w-0 overflow-hidden">
+              {BANKS_PREVIEW.map((bank, idx) => (
+                <span
+                  key={bank}
+                  className={idx >= 2 ? "hidden sm:inline-flex shrink-0" : "inline-flex shrink-0"}
+                >
+                  <BankLogo
+                    name={bank}
+                    logo={getBankLogoUrl(bank)}
+                    className="h-2.5 sm:h-3 w-auto max-w-[28px] sm:max-w-[44px] shrink-0 object-contain"
+                  />
+                </span>
+              ))}
+              {BANKS_REMAINING > 0 && (
+                <span className="text-[8px] sm:text-[10px] font-semibold text-gray-500 bg-gray-100 px-1 sm:px-1.5 py-px rounded-md shrink-0">
+                  +{BANKS_REMAINING}
+                </span>
+              )}
+            </div>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-0.5 sm:gap-1 bg-orange-500 group-hover:bg-orange-600 text-white font-semibold text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl transition-all shadow-sm shadow-orange-500/20">
             <span>Detail</span>
             <span className="hidden sm:inline">→</span>
           </span>

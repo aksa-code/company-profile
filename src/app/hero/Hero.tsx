@@ -177,7 +177,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
           message: "Berhasil! Mengarahkan Anda ke WhatsApp Admin...",
         });
       }
-    } catch (err) {
+    } catch {
       setNotification({
         show: true,
         type: "error",
@@ -281,7 +281,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
             <div className="hidden sm:flex sm:col-span-6 flex-col justify-between h-[410px]">
               {secondaryProject && (
                 <Link
-                  href={`/projects/${secondaryProject.id || ""}`}
+                  href={`/projects/${secondaryProject.id}`}
                   className="relative h-[195px] rounded-2xl overflow-hidden border border-gray-700/60 shadow-xl bg-gray-900/50 backdrop-blur-sm group block"
                 >
                   <div className="absolute inset-0">
@@ -295,7 +295,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
                         className="absolute inset-0"
                       >
                         <Image
-                          src={secondaryProject.imageCover || secondaryProject.image || "/images/placeholder.png"}
+                          src={secondaryProject.imageCover || secondaryProject.image || "/images/placeholder.svg"}
                           alt={secondaryProject.title || "Project"}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -417,7 +417,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
                       className="absolute inset-0"
                     >
                       <Image
-                        src={currentGlobalUnit.image || "/images/placeholder.png"}
+                        src={currentGlobalUnit.image || "/images/placeholder.svg"}
                         alt={currentGlobalUnit.name || "Unit"}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-700"

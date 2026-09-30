@@ -17,7 +17,6 @@ export default function CareerApplyButton({
   careerId,
   careerTitle,
   whatsappNumber,
-  waMessage,
 }: CareerApplyButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -38,6 +37,7 @@ export default function CareerApplyButton({
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- penanda mounted untuk portal/modal agar aman dari hydration mismatch; perilaku disengaja dan tidak diubah
     setMounted(true);
   }, []);
 
@@ -125,12 +125,14 @@ export default function CareerApplyButton({
       );
 
       // Tutup modal dan buka WhatsApp setelah jeda singkat agar notifikasi terbaca
+      // Normalisasi 0 -> 62 agar link wa.me selalu valid.
+      const waNumber = (whatsappNumber.startsWith("0") ? "62" + whatsappNumber.slice(1) : whatsappNumber).replace(/[\s+-]/g, "");
       setTimeout(() => {
         setIsOpen(false);
-        window.open(`https://wa.me/${whatsappNumber}?text=${customMessage}`, "_blank");
+        window.open(`https://wa.me/${waNumber}?text=${customMessage}`, "_blank");
       }, 1000);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Terjadi kesalahan:", err);
       setNotification({
         show: true,
@@ -218,7 +220,7 @@ export default function CareerApplyButton({
                 {phoneError ? (
                   <p className="text-[10px] text-red-500 font-medium">{phoneError}</p>
                 ) : (
-                  <p className="text-[10px] text-slate-400">Harus diawali '08' dan terdiri dari 10 - 13 digit angka.</p>
+                  <p className="text-[10px] text-slate-400">Harus diawali &apos;08&apos; dan terdiri dari 10 - 13 digit angka.</p>
                 )}
               </div>
 

@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Skyland Property - Perumahan Eksklusif & Properti Terbaik di Malang',
     description: 'Temukan hunian modern, perumahan eksklusif, dan properti pilihan terbaik di Malang bersama Skyland Property.',
-    url: 'https://domain-bosmu.com', // Ganti dengan domain asli dari Hostinger nanti
+    url: 'https://skylandnusantara.com',
     siteName: 'Skyland Property',
     locale: 'id_ID',
     type: 'website',
@@ -51,7 +51,7 @@ export default async function Home() {
       <Hero projects={projectsData} companyInfo={companyData} />
       <About />
       <ProjectGrid />
-      {/* <VideoSection /> */}
+      <VideoSection />
       <News />
       <Career />
       <Contact /> 

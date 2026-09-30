@@ -53,7 +53,7 @@ export default function EditCareerPage() {
           setFormData(data);
         }
         setLoading(false);
-      });
+      }).catch(() => setLoading(false));
     }
   }, [id]);
 
@@ -72,6 +72,9 @@ export default function EditCareerPage() {
   };
 
   const updateFormattedSalary = (min: string, max: string) => {
+    // Gaji boleh kosong — jika kedua input kosong, pertahankan nilai DB apa adanya.
+    if (!min && !max) return;
+
     const formattedMin = min ? formatRupiah(min) : "";
     const formattedMax = max ? formatRupiah(max) : "";
 
@@ -113,12 +116,13 @@ export default function EditCareerPage() {
         message: "Lowongan pekerjaan berhasil diperbarui.",
         onConfirm: () => router.push("/admin/career"),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
       setModalConfig({
         isOpen: true,
         type: "danger",
         title: "Gagal Memperbarui",
-        message: "Terjadi kesalahan: " + error.message,
+        message: "Terjadi kesalahan: " + errMessage,
       });
     }
   };

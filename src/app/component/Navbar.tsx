@@ -5,12 +5,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { companyInfo } from "../../lib/companyService";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -23,9 +24,10 @@ export default function Navbar() {
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     setIsOpen(false);
     e.preventDefault();
-    
-    // Semua link navigasi akan melakukan refresh (hard navigation)
-    window.location.href = href;
+
+    // Navigasi SPA (tanpa full reload) — lebih cepat, state terjaga,
+    // dan klik-tengah / Ctrl+klik tetap membuka tab baru secara native.
+    router.push(href);
   };
 
   return (

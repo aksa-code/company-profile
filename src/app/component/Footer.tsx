@@ -29,16 +29,18 @@ export default function Footer() {
   // Mengambil dan membersihkan nomor marketing hotline dari companyInfo.contact.phone
   const rawPhone = companyInfo?.contact?.phone ?? "";
   const cleanPhoneDigits = rawPhone ? rawPhone.replace(/[\s+-]/g, "") : "";
-  const displayPhone = cleanPhoneDigits && cleanPhoneDigits.startsWith("62")
-    ? "0" + cleanPhoneDigits.slice(2)
-    : cleanPhoneDigits;
+  const displayPhone =
+    cleanPhoneDigits && cleanPhoneDigits.startsWith("62")
+      ? "0" + cleanPhoneDigits.slice(2)
+      : cleanPhoneDigits;
 
   // Mengambil dan membersihkan nomor HRD dari companyInfo.contact.hrdPhone
   const rawHrdPhone = companyInfo?.contact?.hrdPhone ?? "";
   const cleanHrdDigits = rawHrdPhone ? rawHrdPhone.replace(/[\s+-]/g, "") : "";
-  const displayHrdPhone = cleanHrdDigits && cleanHrdDigits.startsWith("62")
-    ? "0" + cleanHrdDigits.slice(2)
-    : cleanHrdDigits;
+  const displayHrdPhone =
+    cleanHrdDigits && cleanHrdDigits.startsWith("62")
+      ? "0" + cleanHrdDigits.slice(2)
+      : cleanHrdDigits;
 
   const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (pathname === "/") {
@@ -60,10 +62,13 @@ export default function Footer() {
   return (
     <footer className="bg-white text-gray-500 pt-10 sm:pt-12 pb-6 px-4 sm:px-6 lg:px-8 border-t border-gray-100 overflow-hidden">
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-8 mb-8 sm:mb-10">
-        
         {/* Kolom 1 */}
         <div className="sm:col-span-2 lg:col-span-4 pr-0 lg:pr-6">
-          <Link href="/" onClick={handleLogoClick} className="inline-block mb-3 sm:mb-4 group">
+          <Link
+            href="/"
+            onClick={handleLogoClick}
+            className="inline-block mb-3 sm:mb-4 group"
+          >
             <div className="relative w-52 sm:w-60 h-9 sm:h-10 -ml-1 transition-transform duration-300 group-hover:scale-105">
               <Image
                 src="/images/hero/Logo Skyland.png"
@@ -81,7 +86,9 @@ export default function Footer() {
 
         {/* Kolom 2: Navigation */}
         <div className="sm:col-span-1 lg:col-span-2">
-          <h4 className="text-[#1e293b] font-semibold text-sm mb-3 sm:mb-4">Navigation</h4>
+          <h4 className="text-[#1e293b] font-semibold text-sm mb-3 sm:mb-4">
+            Navigation
+          </h4>
           <ul className="flex flex-col gap-2 text-xs sm:text-sm">
             {[
               { name: "Home", href: "/" },
@@ -93,8 +100,8 @@ export default function Footer() {
               const isActive = pathname === item.href;
               return (
                 <li key={item.name}>
-                  <Link 
-                    href={item.href} 
+                  <Link
+                    href={item.href}
                     onClick={(e) => {
                       if (isActive) {
                         e.preventDefault();
@@ -113,7 +120,9 @@ export default function Footer() {
 
         {/* Kolom 3: Projects */}
         <div className="sm:col-span-1 lg:col-span-3">
-          <h4 className="text-[#1e293b] font-semibold text-sm mb-3 sm:mb-4">Projects</h4>
+          <h4 className="text-[#1e293b] font-semibold text-sm mb-3 sm:mb-4">
+            Projects
+          </h4>
           <ul className="flex flex-col gap-2 text-xs sm:text-sm">
             {projectsData.length === 0 ? (
               <li className="text-gray-400 italic">Loading projects...</li>
@@ -124,8 +133,8 @@ export default function Footer() {
 
                 return (
                   <li key={project.id}>
-                    <Link 
-                      href={projectHref} 
+                    <Link
+                      href={projectHref}
                       onClick={(e) => {
                         if (isActive) {
                           e.preventDefault();
@@ -145,24 +154,50 @@ export default function Footer() {
 
         {/* Kolom 4: Contact */}
         <div className="sm:col-span-2 lg:col-span-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-          <h4 className="text-[#1e293b] font-semibold text-sm mb-3 sm:mb-4 pt-2 sm:pt-0">Contact</h4>
+          <h4 className="text-[#1e293b] font-semibold text-sm mb-3 sm:mb-4 pt-2 sm:pt-0">
+            Contact
+          </h4>
           <ul className="flex flex-col gap-2.5 text-xs sm:text-sm">
             <li className="flex items-start gap-2.5">
               <span className="text-orange-500 mt-0.5 flex-shrink-0">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
                 </svg>
               </span>
               <span>{companyInfo.address}</span>
             </li>
             <li className="flex items-center gap-2.5">
               <span className="text-orange-500 flex-shrink-0">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                  />
                 </svg>
               </span>
-              <a 
+              <a
                 href={`https://wa.me/${cleanPhoneDigits}?text=${encodeURIComponent("Halo Skyland Property, saya ingin bertanya seputar informasi properti.")}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -173,11 +208,21 @@ export default function Footer() {
             </li>
             <li className="flex items-center gap-2.5">
               <span className="text-orange-500 flex-shrink-0">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
                 </svg>
               </span>
-              <a 
+              <a
                 href={`https://wa.me/${cleanHrdDigits}?text=${encodeURIComponent("Halo HRD Skyland Property, saya ingin bertanya seputar informasi karier.")}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -188,21 +233,41 @@ export default function Footer() {
             </li>
             <li className="flex items-center gap-2.5">
               <span className="text-orange-500 flex-shrink-0">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
                 </svg>
               </span>
               <span>{companyInfo.contact?.email}</span>
             </li>
           </ul>
         </div>
-
       </div>
 
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center pt-5 sm:pt-6 border-t border-gray-100 text-xs sm:text-sm gap-3 md:gap-0 text-center">
-        <p>&copy; {new Date().getFullYear()} {companyInfo.fullName} — All rights reserved.</p>
+        <p>
+          &copy; {new Date().getFullYear()} {companyInfo.fullName} — All rights
+          reserved.
+        </p>
         <p className="text-gray-400 font-medium">
-          Developed by <span className="text-gray-600 font-semibold">Moreelo</span>
+          Developed by{" "}
+          <a
+            href="https://www.instagram.com/danady_aksaa/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-600 font-semibold hover:text-gray-900 transition-colors"
+          >
+            Danadyaksa
+          </a>
         </p>
       </div>
     </footer>

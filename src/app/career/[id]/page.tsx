@@ -1,8 +1,5 @@
 // src/app/career/[id]/page.tsx
-import { use } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import Navbar from "../../component/Navbar";
 import Footer from "../../component/Footer";
 import Contact from "../../component/Contact";

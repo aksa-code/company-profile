@@ -1,20 +1,16 @@
 // src/app/hero/News.tsx
-import { supabase } from "../../lib/supabase";
+import { fetchNews } from "../../lib/newsService";
 import NewsClientHero from "./NewsClientHero";
 
 export default async function News() {
-  // Ambil data langsung dari Supabase
-  const { data: newsData, error } = await supabase
-    .from("news")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(3); // Ambil 3 berita terbaru untuk bagian hero
-
-  if (error) {
+  // Ambil data via service (Supabase; image = public URL Supabase Storage)
+  let items = [];
+  try {
+    const all = await fetchNews();
+    items = all.slice(0, 3); // Ambil 3 berita terbaru untuk bagian hero
+  } catch (error) {
     console.error("Error fetching hero news:", error);
   }
-
-  const items = newsData || [];
 
   const newsHeroHeader = {
     titleMain: "Berita &",

@@ -26,6 +26,7 @@ export default function Contact() {
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- penanda mounted agar aman dari hydration mismatch; perilaku disengaja dan tidak diubah
     setMounted(true);
   }, []);
 
@@ -122,6 +123,10 @@ export default function Contact() {
             {/* Tombol yang membuka modal form */}
             <button
               onClick={() => setIsOpen(true)}
+              // Ekstensi browser form-filler (mis. Dashlane) menyuntik atribut
+              // seperti `fdprocessedid` ke tombol ini sebelum hydration;
+              // abaikan peringatan mismatch untuk atribut asing tersebut.
+              suppressHydrationWarning
               className="bg-white text-orange-600 hover:bg-orange-50 font-bold px-6 py-3.5 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg shadow-orange-900/10 text-xs sm:text-sm flex items-center gap-2 cursor-pointer"
             >
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -211,7 +216,7 @@ export default function Contact() {
                 {phoneError ? (
                   <p className="text-[10px] text-red-500 font-medium">{phoneError}</p>
                 ) : (
-                  <p className="text-[10px] text-slate-400">Harus diawali '08' dan terdiri dari 10 - 13 digit angka.</p>
+                  <p className="text-[10px] text-slate-400">Harus diawali &apos;08&apos; dan terdiri dari 10 - 13 digit angka.</p>
                 )}
               </div>
 

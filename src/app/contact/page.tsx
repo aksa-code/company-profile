@@ -25,15 +25,13 @@ export default function ContactPage() {
 
   // Mengambil nomor admin dari companyInfo dan format untuk URL WhatsApp
   const rawPhone = companyInfo.contact?.phone ?? "";
-  const displayPhone = rawPhone.startsWith("62")
-    ? "0" + rawPhone.slice(2)
-    : rawPhone;
 
   const formattedPhone = rawPhone.startsWith("0") ? "62" + rawPhone.slice(1) : rawPhone;
   const adminWhatsAppNumber = formattedPhone.replace(/[\s+-]/g, "");
 
-  // Mengambil nomor WhatsApp HRD dari companyInfo
-  const formattedHrdNumber = companyInfo.contact.hrdPhone.replace(/[\s+-]/g, "");
+  // Mengambil nomor WhatsApp HRD dari companyInfo (dengan guard + normalisasi 0 -> 62)
+  const rawHrd = companyInfo.contact?.hrdPhone ?? "";
+  const formattedHrdNumber = (rawHrd.startsWith("0") ? "62" + rawHrd.slice(1) : rawHrd).replace(/[\s+-]/g, "");
 
   // Mengambil link Google Maps langsung dari data companyInfo
   const googleMapsUrl = companyInfo.mapsUrl;
@@ -137,7 +135,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="lg:col-span-6 space-y-5 sm:space-y-6"
+            className="lg:col-span-6 space-y-5 sm:space-y-6 order-2 lg:order-1"
           >
             <div className="space-y-2 sm:space-y-3">
               <h2 className="text-lg sm:text-2xl font-extrabold text-gray-900">
@@ -204,7 +202,7 @@ export default function ContactPage() {
                   <h4 className="font-bold text-gray-900 text-xs sm:text-sm mb-0.5">
                     {companyInfo.contact.hrdPhoneTitle}
                   </h4>
-                  <p className="text-gray-600 text-xs sm:text-sm">+{companyInfo.contact.hrdPhone} ({companyInfo.contact.hrdDescription})</p>
+                  <p className="text-gray-600 text-xs sm:text-sm">+{companyInfo.contact.hrdPhone}</p>
                 </div>
               </div>
 
@@ -229,7 +227,7 @@ export default function ContactPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="lg:col-span-6 bg-white p-5 sm:p-8 rounded-2xl shadow-xl border border-gray-100"
+            className="lg:col-span-6 bg-white p-5 sm:p-8 rounded-2xl shadow-xl border border-gray-100 order-1 lg:order-2"
           >
             {isSubmitted ? (
               <div className="text-center py-8 sm:py-10 space-y-3">

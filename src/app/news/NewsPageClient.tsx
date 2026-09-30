@@ -8,8 +8,9 @@ import { motion, Variants, AnimatePresence } from "framer-motion";
 import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
 import Contact from "../component/Contact";
+import type { NewsItem } from "../../lib/newsService";
 
-export default function NewsPageClient({ newsData }: { newsData: any[] }) {
+export default function NewsPageClient({ newsData }: { newsData: NewsItem[] }) {
   const [activeCategory, setActiveCategory] = useState("Semua");
 
   // Memastikan halaman otomatis berada di paling atas tanpa animasi saat dimuat
@@ -22,9 +23,6 @@ export default function NewsPageClient({ newsData }: { newsData: any[] }) {
   const filteredNews = activeCategory === "Semua"
     ? newsData
     : newsData.filter((item) => item.category?.toLowerCase() === activeCategory.toLowerCase());
-
-  // Menghitung jumlah total berita / artikel secara dinamis
-  const totalArticlesCount = newsData.length;
 
   // Variabel Animasi
   const fadeIn: Variants = {
@@ -129,7 +127,7 @@ export default function NewsPageClient({ newsData }: { newsData: any[] }) {
                     <Link href={`/news/${news.id}`} className="flex flex-col h-full">
                       <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-gray-100">
                         <Image
-                          src={news.image || "/images/placeholder.png"}
+                          src={typeof news.image === 'string' && news.image ? news.image : "/images/placeholder.svg"}
                           alt={news.title}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-500"

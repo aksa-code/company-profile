@@ -1,7 +1,7 @@
 // src/app/admin/project/[id]/page.tsx
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getProjectById, Project } from '../../../../../lib/projectService';
 import { supabase } from '../../../../../lib/supabase';
@@ -34,7 +34,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   });
 
   // Fetch Data Proyek menggunakan service getProjectById
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     const data = await getProjectById(projectId);
 
@@ -51,16 +51,18 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           router.push('/admin/project');
         }
       });
+      setLoading(false);
       return;
     }
 
     setProject(data);
     setLoading(false);
-  };
+  }, [projectId, router]);
 
   useEffect(() => {
-    fetchData();
-  }, [projectId]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount sekali saat halaman dibuka; perilaku disengaja dan tidak diubah
+    void fetchData();
+  }, [fetchData]);
 
   // Fungsi Eksekusi Hapus Unit
   const executeDeleteUnit = async (unitId: string) => {
@@ -104,12 +106,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           fetchData(); // Refresh data setelah hapus
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
       setModalConfig({
         isOpen: true,
         type: 'danger',
         title: 'Gagal Menghapus',
-        message: 'Gagal menghapus unit: ' + error.message,
+        message: 'Gagal menghapus unit: ' + errMessage,
         confirmText: 'Tutup',
         cancelText: '',
         onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
@@ -144,7 +147,24 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  if (!project) return null;
+  if (!project) {
+    // Tetap render modal agar notifikasi "Tidak Ditemukan" bisa tampil
+    // (fetchData yang gagal sudah mengisi modalConfig + mematikan loading).
+    return (
+      <div className="max-w-6xl mx-auto space-y-8 pb-12">
+        <NotificationModal
+          isOpen={modalConfig.isOpen}
+          type={modalConfig.type}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          confirmText={modalConfig.confirmText}
+          cancelText={modalConfig.cancelText}
+          onConfirm={modalConfig.onConfirm}
+          onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+        />
+      </div>
+    );
+  }
 
   // Mendapatkan daftar unit dari relasi unitTypes / unit_types yang sudah dipetakan service
   const units = project.unitTypes || project.unit_types || [];
@@ -212,7 +232,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <div key={unit.id} className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm flex flex-col group hover:border-orange-200 transition">
                 {unit.image && (
                   <div className="relative w-full h-48 overflow-hidden bg-slate-100">
-                    <img src={unit.image} alt={unit.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                    {/* eslint-disable-next-line @next/next/no-img-element -- pratinjau admin ukuran dinamis; optimasi next/image tidak diperlukan di sini */}
+                <img src={unit.image} alt={unit.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
                   </div>
                 )}
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
@@ -236,6 +257,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       </span>
                       <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
                         🍳 {unit.kitchen ?? 1} Kitchen
+                      </span>
+                      <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                        🚗 {unit.carport ?? 1} Carport
                       </span>
                     </div>
 

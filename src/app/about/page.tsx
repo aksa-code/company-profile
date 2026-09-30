@@ -87,7 +87,7 @@ export default function AboutPage() {
           
           {/* Teks Visi Misi (Masuk dari Kiri) */}
           <motion.div 
-            className="lg:col-span-7 space-y-3 sm:space-y-4 relative z-10"
+            className="lg:col-span-7 space-y-3 sm:space-y-4 relative z-10 order-2 lg:order-1"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
@@ -137,7 +137,7 @@ export default function AboutPage() {
 
           {/* Gambar Visi Misi (Masuk dari Kanan) */}
           <motion.div 
-            className="lg:col-span-5 relative h-[260px] sm:h-[480px] rounded-2xl overflow-hidden shadow-xl bg-gray-200 group"
+            className="lg:col-span-5 relative h-[260px] sm:h-[480px] rounded-2xl overflow-hidden shadow-xl bg-gray-200 group order-1 lg:order-2"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}

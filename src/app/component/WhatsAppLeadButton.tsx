@@ -38,6 +38,7 @@ export default function WhatsAppLeadButton({
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- penanda mounted agar aman dari hydration mismatch; perilaku disengaja dan tidak diubah
     setMounted(true);
   }, []);
 
@@ -117,7 +118,7 @@ export default function WhatsAppLeadButton({
           message: "Berhasil! Mengarahkan Anda ke WhatsApp...",
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error:", err);
       setNotification({
         show: true,
@@ -229,7 +230,7 @@ export default function WhatsAppLeadButton({
                 {phoneError ? (
                   <p className="text-[10px] text-red-500 font-medium">{phoneError}</p>
                 ) : (
-                  <p className="text-[10px] text-slate-400">Harus diawali '08' dan terdiri dari 10 - 13 digit angka.</p>
+                  <p className="text-[10px] text-slate-400">Harus diawali &apos;08&apos; dan terdiri dari 10 - 13 digit angka.</p>
                 )}
               </div>
 

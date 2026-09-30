@@ -6,8 +6,16 @@ import Link from 'next/link';
 import { supabase } from '../../../../lib/supabase';
 import NotificationModal from '../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
+interface ProjectRow {
+  id: string;
+  title: string;
+  category?: string;
+  status_badge?: string;
+  image_cover?: string;
+}
+
 export default function AdminProjectsPage() {
-  const [projectsList, setProjectsList] = useState<any[]>([]);
+  const [projectsList, setProjectsList] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   // State untuk kontrol NotificationModal
@@ -43,7 +51,8 @@ export default function AdminProjectsPage() {
   };
 
   useEffect(() => {
-    fetchProjects();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount sekali saat halaman dibuka; perilaku disengaja dan tidak diubah
+    void fetchProjects();
   }, []);
 
   const executeDelete = async (id: string) => {
@@ -108,12 +117,13 @@ export default function AdminProjectsPage() {
           fetchProjects();
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
       setModalConfig({
         isOpen: true,
         type: 'danger',
         title: 'Gagal Menghapus',
-        message: 'Gagal menghapus proyek: ' + error.message,
+        message: 'Gagal menghapus proyek: ' + errMessage,
         confirmText: 'Tutup',
         cancelText: '',
         onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))

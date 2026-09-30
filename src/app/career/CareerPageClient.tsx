@@ -18,12 +18,12 @@ export default function CareerPageClient({ careersData }: { careersData: CareerI
     window.scrollTo(0, 0);
   }, []);
 
-  const departments = ["Semua", ...Array.from(new Set(careersData.map((item) => item.department)))];
+  const departments = ["Semua", ...Array.from(new Set(careersData.map((item) => item.department).filter(Boolean)))];
 
   const filteredCareers = careersData.filter((item) => {
     const matchesDept = activeDepartment === "Semua" || item.department === activeDepartment;
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (item.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.description || "").toLowerCase().includes(searchQuery.toLowerCase());
     return matchesDept && matchesSearch && !item.isClosed;
   });
 

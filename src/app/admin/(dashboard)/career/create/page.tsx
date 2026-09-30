@@ -100,12 +100,13 @@ export default function CreateCareerPage() {
         message: "Lowongan baru berhasil ditambahkan ke sistem.",
         onConfirm: () => router.push("/admin/career"),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
       setModalConfig({
         isOpen: true,
         type: "danger",
         title: "Gagal Menyimpan",
-        message: "Terjadi kesalahan: " + error.message,
+        message: "Terjadi kesalahan: " + errMessage,
       });
     }
   };

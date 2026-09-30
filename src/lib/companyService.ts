@@ -9,7 +9,7 @@ export const companyInfo = {
   description: "PT Griya Mapan Alami — Premium residential developer in Malang, East Java since 2018. Building homes, building futures.",
   address: "Jl. Doktor Sutomo No.26 Kav A4, Klojen, Malang City, East Java 65111",
   mapsUrl: "https://maps.app.goo.gl/nWdwiuLsdVFazzXw9?g_st=ic",
-  youtubeVideoId: "i1oTnDWtIC4", 
+  youtubeVideoId: "nI556MObdSE", 
   slogan: "Grow Smarter and Faster",
 
   contact: {
@@ -20,7 +20,6 @@ export const companyInfo = {
     phone: "6282145200700",
     hrdPhoneTitle: "Recruitment Contact",
     hrdPhone: hrdNumber || "089876543210",
-    hrdDescription: "Jam kerja: Senin-Jumat, 08.00-16.00",
     emailTitle: "Email Resmi Perusahaan",
     email: "griyamapanalami@gmail.com",
   },

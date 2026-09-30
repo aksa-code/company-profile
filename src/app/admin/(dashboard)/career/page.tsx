@@ -13,7 +13,17 @@ export default function AdminCareerPage() {
   const [loading, setLoading] = useState(true);
 
   // State untuk data pelamar karir
-  const [applications, setApplications] = useState<any[]>([]);
+  interface ApplicationRow {
+    id: string;
+    applicant_name?: string;
+    whatsapp_number?: string;
+    position_title?: string;
+    source?: string;
+    created_at?: string;
+    status?: string;
+  }
+
+  const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
 
   // State untuk kontrol NotificationModal
@@ -53,8 +63,9 @@ export default function AdminCareerPage() {
   };
 
   useEffect(() => {
-    fetchCareerData();
-    fetchApplicationsData();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount sekali saat halaman dibuka; perilaku disengaja dan tidak diubah
+    void fetchCareerData();
+    void fetchApplicationsData();
   }, []);
 
   const handleDelete = (id: string) => {
@@ -75,19 +86,20 @@ export default function AdminCareerPage() {
             message: "Lowongan berhasil dihapus.",
             onConfirm: () => fetchCareerData(),
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
           setModalConfig({
             isOpen: true,
             type: "danger",
             title: "Gagal Menghapus",
-            message: "Terjadi kesalahan: " + error.message,
+            message: "Terjadi kesalahan: " + errMessage,
           });
         }
       },
     });
   };
 
-  const handleUpdateAppStatus = async (appId: any, newStatus: string) => {
+  const handleUpdateAppStatus = async (appId: string, newStatus: string) => {
     // Eksekusi update ke database supabase berdasarkan id
     const { data, error } = await supabase
       .from("career_applications")

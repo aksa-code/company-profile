@@ -7,8 +7,6 @@ import { supabase } from '../../../../../../lib/supabase';
 import Link from 'next/link';
 import NotificationModal from '../../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
-const LIST_BANK_KPR = ["BCA", "BRI", "BNI", "BSI", "BTN", "Mandiri", "BSN"];
-
 export default function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
@@ -28,13 +26,9 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
   const [imageFile, setImageFile] = useState<File | null>(null);
   
   const [clusterConcept, setClusterConcept] = useState('');
-  const [security, setSecurity] = useState('');
 
-  const [selectedBanks, setSelectedBanks] = useState<string[]>([]);
-  
-  const [facility1, setFacility1] = useState('');
-  const [facility2, setFacility2] = useState('');
-  const [facility3, setFacility3] = useState('');
+  // Daftar fasilitas kawasan (dinamis: bisa tambah/hapus baris)
+  const [facilities, setFacilities] = useState<string[]>(['']);
 
   const [isDragging, setIsDragging] = useState(false);
 
@@ -88,22 +82,12 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         
         if (data.specs_summary) {
           setClusterConcept(data.specs_summary.konsep_cluster || '');
-          setSecurity(data.specs_summary.keamanan || '');
         }
 
-        if (data.bank_kpr) {
-          const banksArray = typeof data.bank_kpr === 'string' 
-            ? data.bank_kpr.split(',').map((b: string) => b.trim()) 
-            : [];
-          setSelectedBanks(banksArray);
-        } else {
-          setSelectedBanks([]);
-        }
-
-        const facilities = data.facilities || [];
-        setFacility1(facilities[0] || '');
-        setFacility2(facilities[1] || '');
-        setFacility3(facilities[2] || '');
+        const facilitiesFromDb = Array.isArray(data.facilities)
+          ? data.facilities.filter((f: unknown): f is string => typeof f === 'string' && f.trim() !== '')
+          : [];
+        setFacilities(facilitiesFromDb.length > 0 ? facilitiesFromDb : ['']);
       }
       setLoading(false);
     }
@@ -111,12 +95,16 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     fetchProjectDetail();
   }, [projectId, router]);
 
-  const toggleBank = (bank: string) => {
-    if (selectedBanks.includes(bank)) {
-      setSelectedBanks(selectedBanks.filter((b) => b !== bank));
-    } else {
-      setSelectedBanks([...selectedBanks, bank]);
-    }
+  const updateFacility = (index: number, value: string) => {
+    setFacilities((prev) => prev.map((item, i) => (i === index ? value : item)));
+  };
+
+  const addFacility = () => {
+    setFacilities((prev) => [...prev, '']);
+  };
+
+  const removeFacility = (index: number) => {
+    setFacilities((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -193,12 +181,11 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
         }
       }
 
-      const facilities = [facility1, facility2, facility3].filter(Boolean);
-      const bankKprString = selectedBanks.join(',');
+      // Kirim sebagai array string bersih (tanpa string kosong) ke kolom facilities
+      const cleanFacilities = facilities.map((f) => f.trim()).filter(Boolean);
 
       const specsSummary = {
         konsep_cluster: clusterConcept,
-        keamanan: security,
       };
 
       // 4. Update data ke database Supabase
@@ -213,8 +200,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
           location,
           maps_url: mapsUrl,
           image_cover: imageUrl,
-          bank_kpr: bankKprString,
-          facilities,
+          facilities: cleanFacilities,
           specs_summary: specsSummary,
         })
         .eq('id', projectId);
@@ -234,12 +220,13 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
           router.refresh();
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan saat memperbarui proyek.';
       setModalConfig({
         isOpen: true,
         type: 'danger',
         title: 'Gagal Memperbarui',
-        message: error.message || 'Terjadi kesalahan saat memperbarui proyek.',
+        message: errorMessage,
         confirmText: 'Tutup',
         cancelText: '',
         onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
@@ -299,62 +286,13 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-bold text-slate-800">
-              Deskripsi Proyek <span className="text-orange-500">*</span>
-            </label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} required placeholder="Tuliskan deskripsi lengkap mengenai proyek ini..." className={inputClass} />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800">Status Proyek</label>
-              <select value={statusBadge} onChange={(e) => setStatusBadge(e.target.value)} className={`${inputClass} cursor-pointer`}>
-                <option value="Available">Available</option>
-                <option value="Coming Soon">Coming Soon</option>
-                <option value="Sold Out">Sold Out</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800">Total Unit (Angka)</label>
-              <input type="number" min="0" value={totalUnits} onChange={(e) => setTotalUnits(e.target.value)} placeholder="Contoh: 45" className={inputClass} />
-            </div>
-          </div>
-
-          {/* Spec Summary Section */}
-          <div className="p-5 bg-slate-50/70 rounded-2xl border border-slate-200/60 space-y-4">
-            <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">Spec Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Konsep Cluster</label>
-                <input value={clusterConcept} onChange={(e) => setClusterConcept(e.target.value)} placeholder="Contoh: Modern Minimalist" className={inputClass} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-slate-700">Keamanan</label>
-                <input value={security} onChange={(e) => setSecurity(e.target.value)} placeholder="Contoh: One Gate System, CCTV 24 Jam" className={inputClass} />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800">
-                Lokasi Lengkap <span className="text-orange-500">*</span>
-              </label>
-              <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} required placeholder="Contoh: Jl. Soekarno Hatta No. 12, Malang" className={inputClass} />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800">Google Maps URL</label>
-              <input type="url" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} placeholder="https://maps.google.com/..." className={inputClass} />
-            </div>
-          </div>
-
           {/* Bagian Drag and Drop Gambar Utama (Cover) pada Edit */}
           <div className="space-y-2">
             <label className="block text-sm font-bold text-slate-800">Gambar Utama (Cover)</label>
             
             {existingImage && !imageFile && (
               <div className="mb-3 flex items-center gap-3 p-3 bg-slate-50/70 border border-slate-200/60 rounded-2xl w-fit">
+                {/* eslint-disable-next-line @next/next/no-img-element -- pratinjau admin ukuran dinamis; optimasi next/image tidak diperlukan di sini */}
                 <img src={existingImage} alt="Current Preview" className="w-20 h-14 object-cover rounded-xl border border-slate-200 shadow-sm" />
                 <span className="text-xs text-slate-500 font-medium">Gambar saat ini (akan tetap digunakan jika tidak diubah)</span>
               </div>
@@ -389,37 +327,86 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
             </label>
           </div>
 
-          {/* Fasilitas */}
-          <div className="p-5 bg-slate-50/70 rounded-2xl border border-slate-200/60 space-y-3">
-            <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">Akses / Fasilitas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <input value={facility1} onChange={(e) => setFacility1(e.target.value)} placeholder="Fasilitas 1" className={inputClass} />
-              <input value={facility2} onChange={(e) => setFacility2(e.target.value)} placeholder="Fasilitas 2" className={inputClass} />
-              <input value={facility3} onChange={(e) => setFacility3(e.target.value)} placeholder="Fasilitas 3" className={inputClass} />
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-slate-800">
+              Deskripsi Proyek <span className="text-orange-500">*</span>
+            </label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} required placeholder="Tuliskan deskripsi lengkap mengenai proyek ini..." className={inputClass} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-slate-800">Status Proyek</label>
+              <select value={statusBadge} onChange={(e) => setStatusBadge(e.target.value)} className={`${inputClass} cursor-pointer`}>
+                <option value="Available">Available</option>
+                <option value="Coming Soon">Coming Soon</option>
+                <option value="Sold Out">Sold Out</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-slate-800">Total Unit (Angka)</label>
+              <input type="number" min="0" value={totalUnits} onChange={(e) => setTotalUnits(e.target.value)} placeholder="Contoh: 45" className={inputClass} />
             </div>
           </div>
 
-          {/* Pilihan Bank KPR */}
-          <div className="space-y-2">
-            <label className="block text-sm font-bold text-slate-800">Pilih Bank KPR (Support)</label>
-            <div className="flex flex-wrap gap-2 pt-1">
-              {LIST_BANK_KPR.map((bank) => {
-                const isSelected = selectedBanks.includes(bank);
-                return (
-                  <button
-                    key={bank}
-                    type="button"
-                    onClick={() => toggleBank(bank)}
-                    className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition border ${
-                      isSelected 
-                        ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20' 
-                        : 'bg-white text-slate-600 border-slate-200 hover:border-orange-300 hover:bg-orange-50/20'
-                    }`}
-                  >
-                    {isSelected ? `✓ ${bank}` : `+ ${bank}`}
-                  </button>
-                );
-              })}
+          {/* Spec Summary Section */}
+          <div className="p-5 bg-slate-50/70 rounded-2xl border border-slate-200/60 space-y-4">
+            <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">Spec Summary</h3>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-slate-700">Konsep Cluster</label>
+              <input value={clusterConcept} onChange={(e) => setClusterConcept(e.target.value)} placeholder="Contoh: Modern Minimalist" className={inputClass} />
+            </div>
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between gap-3">
+                <label className="block text-xs font-bold text-slate-700">Fasilitas Kawasan</label>
+                <button
+                  type="button"
+                  onClick={addFacility}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-orange-600 bg-white border border-orange-200/70 hover:bg-orange-100 transition"
+                >
+                  <span className="text-sm leading-none">+</span> Tambah Fasilitas
+                </button>
+              </div>
+              {facilities.length === 0 ? (
+                <p className="text-xs text-slate-400 font-medium">Belum ada fasilitas. Klik &quot;Tambah Fasilitas&quot; untuk menambahkan.</p>
+              ) : (
+                <div className="space-y-2.5">
+                  {facilities.map((facility, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        value={facility}
+                        onChange={(e) => updateFacility(index, e.target.value)}
+                        placeholder={`Fasilitas ${index + 1} (Contoh: Taman Bermain)`}
+                        className={`${inputClass} flex-1`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeFacility(index)}
+                        title="Hapus fasilitas"
+                        aria-label={`Hapus fasilitas ${index + 1}`}
+                        className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-xl border border-red-200/70 bg-white text-red-500 hover:bg-red-100 hover:text-red-600 transition"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-slate-800">
+                Lokasi Lengkap <span className="text-orange-500">*</span>
+              </label>
+              <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} required placeholder="Contoh: Jl. Soekarno Hatta No. 12, Malang" className={inputClass} />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-slate-800">Google Maps URL</label>
+              <input type="url" value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} placeholder="https://maps.google.com/..." className={inputClass} />
             </div>
           </div>
 

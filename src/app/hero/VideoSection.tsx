@@ -24,7 +24,7 @@ export default function VideoSection() {
         
         {/* Bagian Kiri: Teks (Fade-in dari Kiri) */}
         <motion.div 
-          className="lg:col-span-6 space-y-3 sm:space-y-4"
+          className="lg:col-span-6 space-y-3 sm:space-y-4 order-2 lg:order-1"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -58,7 +58,7 @@ export default function VideoSection() {
 
         {/* Bagian Kanan: Video (Fade-in dari Kanan) */}
         <motion.div 
-          className="lg:col-span-6 mt-2 lg:mt-0"
+          className="lg:col-span-6 mt-2 lg:mt-0 order-1 lg:order-2"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}

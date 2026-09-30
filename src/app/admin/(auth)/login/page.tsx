@@ -2,12 +2,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../../../lib/supabase"; // Sesuaikan path relatif ke file supabase.ts Anda
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,9 +44,8 @@ export default function AdminLoginPage() {
       if (error) throw error;
 
       if (data.session) {
-        // Set cookie manual agar terbaca oleh middleware Anda
-        document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=86400; SameSite=Lax`;
-        
+        // Sesi auth sudah ditangani createBrowserClient (cookie sb-*-auth-token
+        // untuk middleware) — tidak perlu cookie manual tambahan.
         setNotification({
           show: true,
           type: "success",
@@ -59,13 +56,21 @@ export default function AdminLoginPage() {
         setTimeout(() => {
           window.location.href = "/admin/dashboard";
         }, 1000);
+      } else {
+        setLoading(false);
+        setNotification({
+          show: true,
+          type: "error",
+          message: "Sesi tidak ditemukan. Pastikan email sudah dikonfirmasi lalu coba lagi.",
+        });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMessage = err instanceof Error ? err.message : "Gagal masuk. Periksa kembali email dan password Anda.";
       setLoading(false);
       setNotification({
         show: true,
         type: "error",
-        message: err.message || "Gagal masuk. Periksa kembali email dan password Anda.",
+        message: errMessage,
       });
     }
   };
