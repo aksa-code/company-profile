@@ -170,7 +170,7 @@ export default function ProjectsPageClient({ projectsData }: { projectsData: Pro
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           className={`object-contain sm:object-cover transition-transform duration-700 group-hover:scale-105 ${isSoldOutCard ? "grayscale" : ""}`}
                         />
-                        <span className={`absolute left-3 top-3 z-10 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold shadow-md backdrop-blur-md ${getStatusColor(statusLabel)}`}>
+                        <span className={`absolute right-3 top-3 z-10 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold shadow-md backdrop-blur-md ${getStatusColor(statusLabel)}`}>
                           {statusLabel}
                         </span>
                         {project.subBadge && (
