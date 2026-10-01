@@ -249,6 +249,26 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     },
   ];
 
+  // Disclaimer statis: harga tercantum belum termasuk biaya-biaya berikut.
+  // Angka besaran bersifat kisaran/estimasi umum — nilai pasti mengikuti
+  // ketentuan masing-masing bank, notaris/PPAT, dan peraturan pajak yang berlaku.
+  const PRICE_ICONS = {
+    bank: "M3 21h18M4 18h16M6 18v-7m4 7v-7m4 7v-7m4 7v-7M2 10l10-6 10 6",
+    cash: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5h.01",
+    clipboard: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
+    doc: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+    receipt: "M9 14l2 2 4-4M5 3h14a1 1 0 011 1v16l-2.5-1.5L15 20l-2.5-1.5L10 20l-2.5-1.5L5 20V4a1 1 0 011-1z",
+  };
+
+  const PRICE_EXCLUSIONS: Array<{ name: string; estimate: string; scope: "Khusus KPR" | "Cash & KPR"; icon: string }> = [
+    { name: "Provisi Bank", estimate: "±1% dari plafon kredit", scope: "Khusus KPR", icon: PRICE_ICONS.bank },
+    { name: "Administrasi Bank", estimate: "±Rp 500 rb – Rp 1 jt", scope: "Khusus KPR", icon: PRICE_ICONS.cash },
+    { name: "Appraisal (penilaian agunan)", estimate: "±Rp 500 rb – Rp 1,5 jt", scope: "Khusus KPR", icon: PRICE_ICONS.clipboard },
+    { name: "Asuransi Jiwa & Kebakaran", estimate: "Mengikuti tarif penanggung, plafon & tenor", scope: "Khusus KPR", icon: SPEC_ICONS.shield },
+    { name: "Notaris & Legalitas (AJB, APHT, SKMHT)", estimate: "±1–2% dari nilai transaksi + PNBP", scope: "Cash & KPR", icon: PRICE_ICONS.doc },
+    { name: "Pajak BPHTB", estimate: "5% × (NPOP – NPOPTKP)", scope: "Cash & KPR", icon: PRICE_ICONS.receipt },
+  ];
+
   return (
     <div className="min-h-screen overflow-hidden bg-slate-50 pb-20 font-sans selection:bg-orange-500 selection:text-white">
       <div className="sticky top-0 z-50 border-b border-slate-100 bg-white/85 shadow-sm backdrop-blur-md">
@@ -329,8 +349,13 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 {sortedUnitTypes.length} Tipe Tersedia
               </span>
             </div>
+            {sortedUnitTypes.length > 1 && (
+              <p className="-mt-5 text-[11px] font-medium text-slate-400 md:hidden">
+                ← Geser untuk lihat {sortedUnitTypes.length} tipe lainnya →
+              </p>
+            )}
 
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="-mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3 md:gap-8 [&::-webkit-scrollbar]:hidden">
               {sortedUnitTypes.map((unit) => {
                 const unitSpecs = [
                   { icon: SPEC_ICONS.bed, text: fmtCount(unit.bedrooms, "Bedroom") },
@@ -341,7 +366,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 return (
                   <article
                     key={unit.id}
-                    className={`group relative flex flex-col overflow-hidden rounded-[2rem] border bg-white text-left transition-all duration-500 hover:-translate-y-2 ${
+                    className={`group relative flex w-[85vw] max-w-[340px] shrink-0 snap-center flex-col overflow-hidden rounded-[2rem] border bg-white text-left transition-all duration-500 md:w-auto md:max-w-none md:snap-align-none md:hover:-translate-y-2 ${
                       unit.isSold ? "border-red-100" : "border-slate-100"
                     } shadow-[0_16px_45px_-24px_rgba(15,23,42,0.28)] hover:shadow-[0_25px_60px_-25px_rgba(15,23,42,0.35)]`}
                   >
@@ -437,6 +462,44 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           </div>
         )}
 
+        {/* Catatan harga: belum termasuk biaya KPR & legalitas */}
+        <details className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <summary className="flex cursor-pointer list-none items-center gap-3 [&::-webkit-details-marker]:hidden">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-slate-900 sm:text-base">
+                Harga belum termasuk biaya KPR & legalitas
+              </span>
+              <span className="mt-0.5 block text-xs text-slate-500">
+                6 pos biaya &middot; klik untuk lihat rincian
+              </span>
+            </span>
+            <svg className="h-5 w-5 shrink-0 text-slate-400 transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+
+          <ul className="mt-4 grid grid-cols-1 gap-x-6 border-t border-slate-100 pt-2 sm:grid-cols-2">
+            {PRICE_EXCLUSIONS.map((item) => (
+              <li key={item.name} className="flex items-baseline justify-between gap-3 border-b border-slate-50 py-2.5 last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0">
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-slate-800">{item.name}</span>
+                  <span className="block text-xs text-slate-500">{item.estimate} &middot; {item.scope}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
+            * Kisaran estimasi; nilai pasti mengikuti ketentuan bank ({GLOBAL_BANK_KPR.join(", ")}),
+            notaris/PPAT, dan pajak daerah. Hubungi marketing untuk simulasi total biaya.
+          </p>
+        </details>
+
         {/* Facility + Access + Bank */}
         <div className="my-8 space-y-10 rounded-[2.5rem] border border-slate-100 bg-white/80 p-8 shadow-xl shadow-slate-200/50 backdrop-blur-md sm:p-10">
           {facilityList.length > 0 && (
@@ -445,7 +508,22 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                 <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Fasilitas Kawasan</h2>
                 <p className="mt-1 text-xs text-slate-500">Fasilitas eksklusif yang dirancang untuk kenyamanan hidup Anda dan keluarga</p>
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {/* Mobile: chips melipat */}
+              <div className="flex flex-wrap justify-center gap-2 md:hidden">
+                {facilityList.map((facility: string, idx: number) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-bold text-orange-700"
+                  >
+                    <svg className="h-3 w-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.28 3.94a1 1 0 00.95.69h4.14c.97 0 1.37 1.24.59 1.81l-3.35 2.44a1 1 0 00-.36 1.12l1.28 3.93c.3.93-.75 1.7-1.54 1.13l-3.35-2.44a1 1 0 00-1.18 0l-3.35 2.44c-.78.57-1.84-.2-1.54-1.13l1.28-3.93a1 1 0 00-.36-1.12L2.09 8.37c-.78-.57-.38-1.81.6-1.81h4.13a1 1 0 00.95-.69l1.28-3.94z" />
+                    </svg>
+                    {facility}
+                  </span>
+                ))}
+              </div>
+              {/* Desktop: kartu grid */}
+              <div className="hidden grid-cols-1 gap-4 sm:grid-cols-2 md:grid lg:grid-cols-3">
                 {facilityList.map((facility: string, idx: number) => (
                   <div
                     key={idx}
@@ -507,9 +585,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
               <h2 className="text-2xl font-black tracking-tight text-slate-900">Didukung Oleh Bank KPR Terkemuka</h2>
               <p className="mt-1 text-xs text-slate-500">Kemudahan proses KPR dengan mitra perbankan terpercaya kami</p>
             </div>
-            <div className="flex items-center justify-start gap-4 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:justify-center sm:gap-6">
+            <div className="flex flex-wrap items-center justify-center gap-3 py-2 sm:gap-6">
               {GLOBAL_BANK_KPR.map((bank: string) => (
-                <BankLogo key={bank} name={bank} logo={getBankLogoUrl(bank)} />
+                <BankLogo key={bank} name={bank} logo={getBankLogoUrl(bank)} className="h-6 w-auto max-w-[80px] object-contain transition-transform duration-300 hover:scale-105 sm:h-9 sm:max-w-[110px]" />
               ))}
             </div>
           </div>
