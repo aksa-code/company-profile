@@ -50,9 +50,9 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                 {project.subBadge}
               </span>
             )}
-            <h3 className="text-white text-[11px] sm:text-sm font-bold drop-shadow-md line-clamp-1">
+            {/* <h3 className="text-white text-[11px] sm:text-sm font-bold drop-shadow-md line-clamp-1">
               {project.title}
-            </h3>
+            </h3> */}
           </div>
           {project.totalUnits && (
             <span className="bg-black/60 backdrop-blur-md text-white text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md font-semibold">
@@ -76,11 +76,11 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             {project.description}
           </p>
 
-          {/* List Fitur / Fasilitas Kecil */}
+          {/* List Fitur / Fasilitas Kecil — sebaris saja, tidak wrap */}
           {project.facilities && project.facilities.length > 0 && (
-            <div className="hidden sm:flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-gray-100">
+            <div className="flex flex-nowrap gap-1.5 mt-2 pt-2 border-t border-gray-100 overflow-hidden [mask-image:linear-gradient(to_right,black_85%,transparent_100%)]">
               {project.facilities.slice(0, 3).map((facility, idx) => (
-                <span key={idx} className="bg-orange-50 text-orange-700 text-[10px] font-medium px-2 py-0.5 rounded-md">
+                <span key={idx} className="bg-orange-50 text-orange-700 text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">
                   ✓ {facility}
                 </span>
               ))}

@@ -8,7 +8,6 @@ import Contact from "../../component/Contact";
 import {
   getProjectById,
   MARKETING_HOTLINE,
-  GLOBAL_SECURITY,
   GLOBAL_LEGALITY,
   GLOBAL_BANK_KPR,
   getBankLogoUrl,
@@ -175,30 +174,6 @@ function SpecItem({ icon, text }: { icon: string; text: string }) {
   );
 }
 
-interface SummaryItemProps {
-  icon: string;
-  label: string;
-  value: string;
-  pad?: string;
-  iconClass?: string;
-  labelClass?: string;
-  valueClass?: string;
-}
-
-function SummaryItem({ icon, label, value, pad = "", iconClass = "", labelClass = "", valueClass = "" }: SummaryItemProps) {
-  return (
-    <div className={`group flex items-center gap-2.5 py-3 first:pt-0 last:pb-0 sm:gap-3.5 sm:py-0 ${pad}`}>
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-105 sm:h-11 sm:w-11 ${iconClass}`}>
-        <OutlineIcon d={icon} className="h-4 w-4 sm:h-5 sm:w-5" />
-      </span>
-      <div className="min-w-0">
-        <dt className={`text-[9px] font-bold uppercase tracking-[0.12em] sm:text-[11px] ${labelClass}`}>{label}</dt>
-        <dd className={valueClass}>{value}</dd>
-      </div>
-    </div>
-  );
-}
-
 /* ---------------- page ---------------- */
 
 export default async function ProjectDetailPage({ params }: PageProps) {
@@ -227,27 +202,6 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       if (aCom !== bCom) return aCom ? -1 : 1;
       return parsePriceToNumber(b.priceStarting || b.price_starting) - parsePriceToNumber(a.priceStarting || a.price_starting);
     });
-
-  const summaryItems: SummaryItemProps[] = [
-    {
-      icon: SPEC_ICONS.spark, label: "Konsep Cluster", value: clusterConcept, pad: "sm:pr-7",
-      iconClass: "bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white",
-      labelClass: "text-slate-400",
-      valueClass: "mt-0.5 text-sm font-extrabold leading-tight text-slate-900 sm:mt-1 sm:text-lg",
-    },
-    {
-      icon: SPEC_ICONS.shield, label: "Keamanan", value: GLOBAL_SECURITY, pad: "sm:px-7",
-      iconClass: "bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white",
-      labelClass: "text-slate-400",
-      valueClass: "mt-0.5 text-sm font-extrabold leading-tight text-slate-900 sm:mt-1 sm:text-lg",
-    },
-    {
-      icon: SPEC_ICONS.badge, label: "Legalitas", value: GLOBAL_LEGALITY, pad: "sm:pl-7",
-      iconClass: "bg-orange-500 text-white shadow-[0_8px_20px_-6px_rgba(249,115,22,0.5)]",
-      labelClass: "text-orange-600",
-      valueClass: "mt-0.5 text-lg font-black leading-none tracking-tight text-orange-600 sm:text-[1.75rem]",
-    },
-  ];
 
   // Disclaimer statis: harga tercantum belum termasuk biaya-biaya berikut.
   // Angka besaran bersifat kisaran/estimasi umum — nilai pasti mengikuti
@@ -328,13 +282,32 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
       {/* Main */}
       <div className="relative z-20 mx-auto -mt-16 max-w-6xl space-y-12 px-4 sm:-mt-20 sm:px-6 lg:px-8">
-        {/* Summary */}
-        <div className="rounded-3xl border border-slate-100 bg-white px-4 py-4 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.15)] sm:rounded-[2rem] sm:px-7 sm:py-6 lg:px-8">
-          <dl className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-[1.15fr_1.15fr_0.7fr] sm:divide-x sm:divide-y-0">
-            {summaryItems.map((item) => (
-              <SummaryItem key={item.label} {...item} />
-            ))}
-          </dl>
+        {/* Identitas proyek — posisi summary sebelumnya, style tile baru + shape putih */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-2 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.15)] sm:rounded-[2rem] sm:p-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4">
+            <div className="group flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 transition-all duration-300 hover:border-orange-200 hover:bg-orange-50/60 sm:gap-3.5 sm:rounded-[1.5rem] sm:p-5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-600 transition-all duration-300 group-hover:scale-105 group-hover:bg-orange-500 group-hover:text-white sm:h-11 sm:w-11">
+                <OutlineIcon d={SPEC_ICONS.spark} className="h-4 w-4 sm:h-5 sm:w-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[8px] font-bold uppercase tracking-[0.12em] text-slate-400 sm:text-[10px] sm:tracking-[0.14em]">Konsep Cluster</span>
+                <span className="mt-0.5 block truncate text-xs font-extrabold leading-tight text-slate-900 sm:text-lg">{clusterConcept}</span>
+              </span>
+            </div>
+          <div className="group relative flex items-center gap-2 overflow-hidden rounded-xl border border-orange-500/30 bg-slate-950 p-2.5 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-orange-500/25 sm:gap-3.5 sm:rounded-[1.5rem] sm:p-5">
+            <div className="pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full bg-orange-500/25 blur-2xl" />
+            <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white shadow-[0_8px_20px_-6px_rgba(249,115,22,0.6)] sm:h-11 sm:w-11">
+              <OutlineIcon d={SPEC_ICONS.badge} className="h-4 w-4 sm:h-5 sm:w-5" />
+            </span>
+            <span className="relative min-w-0">
+              <span className="block text-[8px] font-bold uppercase tracking-[0.12em] text-orange-400 sm:text-[10px] sm:tracking-[0.14em]">Legalitas Terjamin</span>
+              <span className="mt-0.5 block text-sm font-black leading-none tracking-tight text-white sm:text-2xl">{GLOBAL_LEGALITY}</span>
+            </span>
+            {/* <span className="relative ml-auto hidden shrink-0 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/90 sm:inline-block">
+              Certified
+            </span> */}
+          </div>
+          </div>
         </div>
 
         {/* Unit types */}
