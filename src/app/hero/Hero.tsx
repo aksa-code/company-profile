@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
+import { useAutoSlide } from "./useAutoSlide";
 
 // --- DEFINISI INTERFACE UNTUK MENGHINDARI ERROR 'any' ---
 
@@ -90,25 +91,6 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
   });
 
   useEffect(() => {
-    if (allGlobalUnits.length === 0) return;
-    const unitInterval = setInterval(() => {
-      setActiveUnitIndex((prevIndex) => (prevIndex + 1) % allGlobalUnits.length);
-    }, 4500);
-    return () => clearInterval(unitInterval);
-  }, [allGlobalUnits.length]);
-
-  useEffect(() => {
-    if (projects.length <= 1) return;
-    const projectInterval = setInterval(() => {
-      setActiveProjectIndex((prevIndex) => {
-        const nextIndex = prevIndex + 1;
-        return nextIndex >= projects.length ? 1 : nextIndex;
-      });
-    }, 5500);
-    return () => clearInterval(projectInterval);
-  }, [projects.length]);
-
-  useEffect(() => {
     if (notification.show) {
       const timer = setTimeout(() => {
         setNotification((prev) => ({ ...prev, show: false }));
@@ -116,6 +98,25 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
       return () => clearTimeout(timer);
     }
   }, [notification.show]);
+
+  // Auto-slide hemat resource: pause saat tab tidak aktif / di luar viewport /
+  // di-hover / di-touch. Interval dipertahankan (unit 4500ms, proyek 5500ms).
+  const unitCarouselRef = useAutoSlide({
+    intervalMs: 4500,
+    enabled: allGlobalUnits.length > 0,
+    onAdvance: () =>
+      setActiveUnitIndex((prevIndex) => (prevIndex + 1) % allGlobalUnits.length),
+  });
+
+  const projectCarouselRef = useAutoSlide({
+    intervalMs: 5500,
+    enabled: projects.length > 1,
+    onAdvance: () =>
+      setActiveProjectIndex((prevIndex) => {
+        const nextIndex = prevIndex + 1;
+        return nextIndex >= projects.length ? 1 : nextIndex;
+      }),
+  });
 
   const currentGlobalUnit = allGlobalUnits[activeUnitIndex] || allGlobalUnits[0];
   const secondaryProject = projects[activeProjectIndex] || projects[1] || mainProject;
@@ -282,7 +283,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-12 gap-3 relative items-center"
           >
-            <div className="hidden sm:flex sm:col-span-6 flex-col justify-between h-[410px]">
+            <div ref={projectCarouselRef} className="hidden sm:flex sm:col-span-6 flex-col justify-between h-[410px]">
               {secondaryProject && (
                 <Link
                   href={`/projects/${secondaryProject.id}`}
@@ -416,7 +417,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
             </div>
 
             {currentGlobalUnit && (
-              <div className="sm:col-span-6 relative h-[280px] sm:h-[410px] rounded-2xl overflow-hidden border border-gray-700/60 shadow-xl bg-gray-900/50 backdrop-blur-sm group">
+              <div ref={unitCarouselRef} className="sm:col-span-6 relative h-[280px] sm:h-[410px] rounded-2xl overflow-hidden border border-gray-700/60 shadow-xl bg-gray-900/50 backdrop-blur-sm group">
                 <div className="absolute inset-0">
                   <AnimatePresence mode="wait">
                     <motion.div
