@@ -204,6 +204,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
           src="/images/hero/Skyland Savana.png"
           alt="Skyland Property Background"
           fill
+          sizes="100vw"
           className="object-cover opacity-80"
           priority
         />
@@ -301,6 +302,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
                           src={secondaryProject.imageCover || secondaryProject.image || "/images/placeholder.svg"}
                           alt={secondaryProject.title || "Project"}
                           fill
+                          sizes="(max-width: 1024px) 100vw, 55vw"
                           className="object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       </motion.div>
@@ -429,6 +431,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
                         src={currentGlobalUnit.image || "/images/placeholder.svg"}
                         alt={currentGlobalUnit.name || "Unit"}
                         fill
+                        sizes="(max-width: 1024px) 100vw, 55vw"
                         className="object-cover group-hover:scale-105 transition-transform duration-700"
                       />
                     </motion.div>

@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../lib/supabase';
+import { compressForUpload, formatFileSize } from '../../../../../lib/imageUpload';
 import Link from 'next/link';
 import NotificationModal from '../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
@@ -19,6 +20,7 @@ export default function CreateProjectPage() {
   const [location, setLocation] = useState('');
   const [mapsUrl, setMapsUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [compressing, setCompressing] = useState(false);
   
   const [clusterConcept, setClusterConcept] = useState('');
 
@@ -59,6 +61,35 @@ export default function CreateProjectPage() {
     setFacilities((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const failModal = (title: string, message: string) => {
+    setModalConfig({
+      isOpen: true,
+      type: 'warning',
+      title,
+      message,
+      confirmText: 'Tutup',
+      cancelText: '',
+      onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  };
+
+  const handleCoverSelect = async (files: FileList | File[] | null) => {
+    if (!files || Array.from(files).length === 0) return;
+    const file = Array.from(files)[0];
+    if (!file.type.startsWith('image/')) {
+      failModal('Format Tidak Valid', 'Harap unggah file berformat gambar!');
+      return;
+    }
+    setCompressing(true);
+    try {
+      setImageFile(await compressForUpload(file));
+    } catch (err) {
+      failModal('Gambar Terlalu Besar', err instanceof Error ? err.message : 'Gagal mengompres gambar.');
+    } finally {
+      setCompressing(false);
+    }
+  };
+
   // Handler Event Drag and Drop
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
@@ -75,20 +106,7 @@ export default function CreateProjectPage() {
     setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile.type.startsWith('image/')) {
-        setImageFile(droppedFile);
-      } else {
-        setModalConfig({
-          isOpen: true,
-          type: 'warning',
-          title: 'Format Tidak Valid',
-          message: 'Harap unggah file berformat gambar!',
-          confirmText: 'Tutup',
-          cancelText: '',
-          onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
-        });
-      }
+      void handleCoverSelect(e.dataTransfer.files);
     }
   };
 
@@ -101,9 +119,10 @@ export default function CreateProjectPage() {
       let imageUrl = '';
 
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('projects-images').upload(fileName, imageFile);
+        // Single pipeline: imageFile sudah dikompres sekali saat dipilih — langsung upload.
+        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
+        const fileName = `${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from('projects-images').upload(fileName, imageFile, { contentType: imageFile.type || 'image/jpeg', cacheControl: '31536000' });
         if (uploadError) throw uploadError;
         const { data: publicUrlData } = supabase.storage.from('projects-images').getPublicUrl(fileName);
         imageUrl = publicUrlData.publicUrl;
@@ -217,18 +236,20 @@ export default function CreateProjectPage() {
             >
               <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
                 <p className="text-sm text-slate-600 font-medium">
-                  {imageFile ? (
-                    <span className="text-orange-600 font-bold">📁 {imageFile.name} (Terpilih)</span>
+                  {compressing ? (
+                    <span className="text-orange-600 font-bold">⏳ Mengompres gambar...</span>
+                  ) : imageFile ? (
+                    <span className="text-orange-600 font-bold">📁 {imageFile.name} ({formatFileSize(imageFile.size)} — otomatis hemat storage)</span>
                   ) : (
                     <>Seret dan lepas gambar ke sini, atau <span className="text-orange-600 font-semibold underline">klik untuk memilih</span></>
                   )}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">Mendukung format file gambar (PNG, JPG, JPEG)</p>
+                <p className="text-xs text-slate-400 mt-1">Mendukung JPG/PNG/WebP — otomatis dikompres max 1920px (~&lt;1MB), tetap tajam di web</p>
               </div>
               <input 
                 type="file" 
                 accept="image/*" 
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)} 
+                onChange={(e) => { void handleCoverSelect(e.target.files); e.target.value = ''; }} 
                 className="hidden" 
               />
             </label>
@@ -329,7 +350,7 @@ export default function CreateProjectPage() {
           </Link>
           <button 
             type="submit" 
-            disabled={loading} 
+            disabled={loading || compressing} 
             className="w-full sm:w-auto px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold transition shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-98 disabled:opacity-50 text-center"
           >
             {loading ? (

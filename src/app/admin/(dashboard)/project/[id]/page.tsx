@@ -67,10 +67,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   // Fungsi Eksekusi Hapus Unit
   const executeDeleteUnit = async (unitId: string) => {
     try {
-      // 1. Ambil data unit terlebih dahulu untuk mendapatkan URL gambarnya
+      // 1. Ambil data unit terlebih dahulu untuk mendapatkan URL gambar + galeri
       const { data: unitData, error: fetchError } = await supabase
         .from('unit_types')
-        .select('image')
+        .select('image, gallery')
         .eq('id', unitId)
         .single();
 
@@ -84,6 +84,21 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             .from('house-type-images')
             .remove([fileName]);
         }
+      }
+
+      // 2b. Hapus file-file galeri di bucket tipe-detail
+      const galleryArr = Array.isArray(unitData?.gallery) ? unitData.gallery : [];
+      const galleryPaths = galleryArr
+        .map((g: unknown) => {
+          const url = typeof g === 'string' ? g : (g as { url?: string })?.url;
+          if (!url || typeof url !== 'string') return null;
+          const marker = '/storage/v1/object/public/tipe-detail/';
+          const idx = url.indexOf(marker);
+          return idx === -1 ? url.split('/').pop() : url.slice(idx + marker.length).split('?')[0];
+        })
+        .filter((x): x is string => !!x);
+      if (galleryPaths.length > 0) {
+        await supabase.storage.from('tipe-detail').remove(galleryPaths);
       }
 
       // 3. Hapus baris data dari database tabel unit_types
@@ -247,6 +262,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       )}
                     </div>
                     <p className="text-sm font-bold text-orange-600">Start: {unit.priceStarting || unit.price_starting}</p>
+                    {Array.isArray(unit.gallery) && unit.gallery.length > 0 && (
+                      <p className="text-xs font-semibold text-slate-500">
+                        📷 {unit.gallery.length} foto galeri (bucket tipe-detail)
+                      </p>
+                    )}
 
                     <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500 pt-1">
                       <span className="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">

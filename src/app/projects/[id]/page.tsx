@@ -36,6 +36,7 @@ interface UnitType {
   kitchen?: number | null;
   carport?: number | null;
   image?: string | null;
+  gallery?: Array<string | { url: string; label?: string }> | null;
   floorInfo?: string | null;
   floor_info?: string | null;
   isSoldOut?: boolean;
@@ -95,16 +96,19 @@ interface NormalizedUnit extends UnitType {
   price: string;
   fInfo: string;
   isSold: boolean;
+  galleryCount: number;
 }
 
 // Satu-satunya tempat fallback field unit — JSX di bawah memakai hasil ini.
 function normalizeUnit(u: UnitType): NormalizedUnit {
+  const gallery = Array.isArray(u.gallery) ? u.gallery : [];
   return {
     ...u,
     bType: u.buildingType || u.building_type || "",
     price: u.priceStarting || u.price_starting || u.pricestarting || "Hubungi Kami",
     fInfo: u.floorInfo || u.floor_info || "",
     isSold: u.isSoldOut ?? u.is_sold_out ?? false,
+    galleryCount: gallery.length,
   };
 }
 
@@ -232,7 +236,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       {/* Hero */}
       <div className="relative overflow-hidden bg-slate-950 px-4 pb-32 pt-16 text-white sm:px-6 sm:pb-40 sm:pt-24 lg:px-8">
         <div className="absolute inset-0 z-0 scale-105 opacity-40 transition-transform duration-1000 hover:scale-110">
-          <Image src={cover} alt={project.title} fill className="object-cover object-center brightness-90 transition-all duration-700" priority />
+          <Image src={cover} alt={project.title} fill sizes="100vw" className="object-cover object-center brightness-90 transition-all duration-700" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/30" />
         </div>
 
@@ -351,12 +355,16 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                       </div>
                     )}
 
-                    {/* Image — tanpa nama unit ganda (nama hanya di judul body) */}
-                    <div className={`relative aspect-[4/3] w-full overflow-hidden ${unit.isSold ? "bg-slate-700" : "bg-slate-900"}`}>
+                    {/* Image — klik masuk ke halaman detail tipe (galeri POV + denah) */}
+                    <Link
+                      href={`/projects/${project.id}/tipe/${unit.id}`}
+                      className={`relative block aspect-[4/3] w-full overflow-hidden ${unit.isSold ? "bg-slate-700" : "bg-slate-900"}`}
+                    >
                       <Image
                         src={unit.image || "/images/placeholder.svg"}
                         alt={unit.name}
                         fill
+                        sizes="(max-width: 768px) 85vw, (max-width: 1200px) 50vw, 380px"
                         className={`object-cover transition-transform duration-700 ease-out group-hover:scale-[1.07] ${unit.isSold ? "opacity-50" : "opacity-100"}`}
                       />
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/5 to-transparent" />
@@ -372,16 +380,30 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                           </span>
                         </div>
                       )}
-                    </div>
+                      <div className="absolute bottom-4 left-4 z-10">
+                        <span className="rounded-xl bg-orange-500 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+                          {/* 📷 {unit.galleryCount + 1} foto •  */}
+                          Lihat Detail
+                        </span>
+                      </div>
+                    </Link>
 
                     {/* Body */}
                     <div className={`flex flex-1 flex-col justify-between p-5 sm:p-6 ${unit.isSold ? "opacity-70" : "opacity-100"}`}>
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <h3 className="text-xl font-black tracking-tight text-slate-900 transition-colors duration-300 group-hover:text-orange-600">
-                            {unit.name}
-                          </h3>
+                          <Link href={`/projects/${project.id}/tipe/${unit.id}`}>
+                            <h3 className="text-xl font-black tracking-tight text-slate-900 transition-colors duration-300 hover:text-orange-600">
+                              {unit.name}
+                            </h3>
+                          </Link>
                           <p className="line-clamp-2 text-xs leading-relaxed text-slate-500">{unit.specs}</p>
+                          {/* <Link
+                            href={`/projects/${project.id}/tipe/${unit.id}`}
+                            className="inline-block text-xs font-bold text-orange-600 hover:text-orange-700 hover:underline"
+                          >
+                            Lihat galeri & denah →
+                          </Link> */}
                         </div>
 
                         {unit.fInfo && (

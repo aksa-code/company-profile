@@ -4,6 +4,8 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../../../lib/supabase';
+import { UNIT_GALLERY_BUCKET, type UnitGalleryImage } from '../../../../../../../../lib/projectService';
+import { compressForUpload, formatFileSize } from '../../../../../../../../lib/imageUpload';
 import Link from 'next/link';
 import NotificationModal from '../../../../../../../component/ui/NotificationModal';
 
@@ -49,6 +51,12 @@ export default function EditHouseTypePage({
   const [existingImage, setExistingImage] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [compressing, setCompressing] = useState(false);
+
+  // Galeri detail dari kolom gallery (bucket tipe-detail)
+  const [existingGallery, setExistingGallery] = useState<UnitGalleryImage[]>([]);
+  const [galleryItems, setGalleryItems] = useState<{ file: File; label: string; preview: string }[]>([]);
+  const [isGalleryDragging, setIsGalleryDragging] = useState(false);
 
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -92,25 +100,47 @@ export default function EditHouseTypePage({
     setIsDragging(false);
   };
 
+  const showWarning = (title: string, message: string) => {
+    setModalConfig({
+      isOpen: true,
+      type: 'warning',
+      title,
+      message,
+      confirmText: 'Tutup',
+      cancelText: '',
+      onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  };
+
+  const prepareFiles = async (files: FileList | File[]): Promise<File[]> => {
+    const list = Array.from(files);
+    if (list.some((f) => !f.type.startsWith('image/'))) {
+      showWarning('Format Tidak Valid', 'Hanya file gambar (JPG/PNG/WebP) yang bisa diupload.');
+    }
+    const imgs = list.filter((f) => f.type.startsWith('image/'));
+    setCompressing(true);
+    try {
+      return await Promise.all(imgs.map((f) => compressForUpload(f)));
+    } catch (err) {
+      showWarning('Gambar Terlalu Besar', err instanceof Error ? err.message : 'Gagal mengompres gambar.');
+      return [];
+    } finally {
+      setCompressing(false);
+    }
+  };
+
+  const handleCoverSelect = async (files: FileList | File[] | null) => {
+    if (!files || Array.from(files).length === 0) return;
+    const done = await prepareFiles([Array.from(files)[0]]);
+    if (done.length > 0) setImageFile(done[0]);
+  };
+
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile.type.startsWith('image/')) {
-        setImageFile(droppedFile);
-      } else {
-        setModalConfig({
-          isOpen: true,
-          type: 'warning',
-          title: 'Format Tidak Valid',
-          message: 'Harap unggah file berformat gambar!',
-          confirmText: 'Tutup',
-          cancelText: '',
-          onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
-        });
-      }
+      void handleCoverSelect(e.dataTransfer.files);
     }
   };
 
@@ -158,6 +188,22 @@ export default function EditHouseTypePage({
         setRawPriceInput(extractedDigits);
 
         setExistingImage(data.image || '');
+
+        const rawGallery = Array.isArray(data.gallery) ? data.gallery : [];
+        setExistingGallery(
+          rawGallery
+            .map((g: unknown) => {
+              if (typeof g === 'string') return { url: g };
+              if (g && typeof g === 'object') {
+                const obj = g as Record<string, unknown>;
+                return typeof obj.url === 'string'
+                  ? { url: obj.url, label: typeof obj.label === 'string' ? obj.label : undefined }
+                  : null;
+              }
+              return null;
+            })
+            .filter((x: UnitGalleryImage | null): x is UnitGalleryImage => !!x && !!x.url)
+        );
       }
       setLoading(false);
     }
@@ -167,6 +213,25 @@ export default function EditHouseTypePage({
     }
   }, [unitId, projectIdParam, router]);
 
+  const addGalleryFiles = async (files: FileList | File[]) => {
+    const done = await prepareFiles(files);
+    if (done.length === 0) return;
+    setGalleryItems((prev) => [
+      ...prev,
+      ...done.map((file) => ({ file, label: '', preview: URL.createObjectURL(file) })),
+    ]);
+  };
+
+  const extractStoragePath = (url: string, bucket: string): string | null => {
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const idx = url.indexOf(marker);
+    if (idx === -1) {
+      const parts = url.split('/');
+      return parts.pop() || null;
+    }
+    return url.slice(idx + marker.length).split('?')[0];
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -175,25 +240,25 @@ export default function EditHouseTypePage({
       let imageUrl = existingImage;
 
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `unit_${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
+        // Single pipeline: imageFile sudah dikompres sekali saat dipilih — langsung upload.
+        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
+        const fileName = `unit_${Date.now()}.${ext}`;
 
         const { error: uploadError } = await supabase.storage
           .from('house-type-images')
-          .upload(filePath, imageFile);
+          .upload(fileName, imageFile, { contentType: imageFile.type || 'image/jpeg', cacheControl: '31536000' });
 
         if (uploadError) throw new Error('Gagal upload gambar: ' + uploadError.message);
 
         const { data: publicUrlData } = supabase.storage
           .from('house-type-images')
-          .getPublicUrl(filePath);
+          .getPublicUrl(fileName);
 
         imageUrl = publicUrlData.publicUrl;
 
         if (existingImage) {
           try {
-            const oldPath = existingImage.split('/').pop();
+            const oldPath = existingImage.split('/').pop()?.split('?')[0];
             if (oldPath) {
               await supabase.storage
                 .from('house-type-images')
@@ -204,6 +269,23 @@ export default function EditHouseTypePage({
           }
         }
       }
+
+      // Upload foto galeri baru ke bucket tipe-detail (sudah dikompres saat dipilih)
+      const newGallery: UnitGalleryImage[] = [];
+      for (let i = 0; i < galleryItems.length; i++) {
+        const item = galleryItems[i];
+        const filePath = `${unitId}/${Date.now()}_${i}.jpg`;
+        const { error: galleryError } = await supabase.storage
+          .from(UNIT_GALLERY_BUCKET)
+          .upload(filePath, item.file, { contentType: item.file.type || 'image/jpeg', cacheControl: '31536000' });
+        if (galleryError) throw new Error('Gagal upload galeri: ' + galleryError.message);
+        const { data: publicUrlData } = supabase.storage
+          .from(UNIT_GALLERY_BUCKET)
+          .getPublicUrl(filePath);
+        newGallery.push({ url: publicUrlData.publicUrl, label: item.label.trim() || undefined });
+      }
+
+      const finalGallery = [...existingGallery, ...newGallery];
 
       const { error: updateError } = await supabase
         .from('unit_types')
@@ -221,6 +303,7 @@ export default function EditHouseTypePage({
           kitchen: kitchen !== '' ? parseInt(kitchen) : 1, // Diperbarui ke database
           carport: carport !== '' ? parseInt(carport) : 1, // Diperbarui ke database
           image: imageUrl,
+          gallery: finalGallery,
         })
         .eq('id', unitId);
 
@@ -460,7 +543,7 @@ export default function EditHouseTypePage({
 
           {/* Upload Gambar / Denah */}
           <div className="pt-2">
-            <label className="block text-sm font-bold text-slate-800 mb-2">Gambar / Denah Rumah</label>
+            <label className="block text-sm font-bold text-slate-800 mb-2">Gambar Cover (Tampak Depan)</label>
 
             {existingImage && !imageFile && (
               <div className="mb-4 flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl w-fit">
@@ -482,22 +565,123 @@ export default function EditHouseTypePage({
             >
               <div className="flex flex-col items-center justify-center p-6 text-center">
                 <p className="text-sm text-slate-600 font-medium">
-                  {imageFile ? (
+                  {compressing ? (
+                    <span className="text-orange-600 font-bold">⏳ Mengompres gambar...</span>
+                  ) : imageFile ? (
                     <span className="text-orange-600 font-bold flex items-center gap-2">
-                      <span>📁</span> {imageFile.name} (Gambar Baru Terpilih)
+                      <span>📁</span> {imageFile.name} ({formatFileSize(imageFile.size)} — otomatis hemat storage)
                     </span>
                   ) : (
                     <>Seret dan lepas gambar baru ke sini, atau <span className="text-orange-600 font-semibold underline">klik untuk memilih</span></>
                   )}
                 </p>
+                <p className="text-xs text-slate-400 mt-1">Otomatis dikompres max 1920px (~&lt;1MB) agar hemat kuota 1GB — tetap tajam di web</p>
               </div>
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                onChange={(e) => { void handleCoverSelect(e.target.files); e.target.value = ''; }}
                 className="hidden"
               />
             </label>
+          </div>
+
+          {/* Galeri Detail */}
+          <div className="pt-2">
+            <label className="block text-sm font-bold text-slate-800 mb-2">
+              Galeri Detail (POV kanan/kiri, denah, interior) — bucket tipe-detail
+            </label>
+
+            {existingGallery.length > 0 && (
+              <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {existingGallery.map((g, idx) => (
+                  <div key={`${g.url}-${idx}`} className="flex items-center gap-3 p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- pratinjau admin ukuran dinamis */}
+                    <img src={g.url} alt={g.label || `Galeri ${idx + 1}`} className="w-20 h-14 object-cover rounded-xl border border-slate-200 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="text"
+                        value={g.label || ''}
+                        onChange={(e) => setExistingGallery((prev) => prev.map((x, i) => i === idx ? { ...x, label: e.target.value } : x))}
+                        placeholder="Label: Tampak Depan / Samping Kanan / Denah Lt.1"
+                        className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:border-orange-500 bg-white"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const target = existingGallery[idx];
+                        setExistingGallery((prev) => prev.filter((_, i) => i !== idx));
+                        const path = extractStoragePath(target.url, UNIT_GALLERY_BUCKET);
+                        if (path) {
+                          try {
+                            await supabase.storage.from(UNIT_GALLERY_BUCKET).remove([path]);
+                          } catch (err) {
+                            console.error('Gagal menghapus file galeri di storage:', err);
+                          }
+                        }
+                      }}
+                      className="px-2.5 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition shrink-0"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <label
+              onDragOver={(e) => { e.preventDefault(); setIsGalleryDragging(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setIsGalleryDragging(false); }}
+              onDrop={(e) => { e.preventDefault(); setIsGalleryDragging(false); if (e.dataTransfer.files?.length) void addGalleryFiles(e.dataTransfer.files); }}
+              className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-3xl cursor-pointer transition ${
+                isGalleryDragging
+                  ? 'border-orange-500 bg-orange-50/50 scale-[1.01]'
+                  : 'border-slate-200 bg-slate-50 hover:bg-slate-100/60'
+              }`}
+            >
+              <div className="flex flex-col items-center justify-center p-5 text-center">
+                <p className="text-sm text-slate-600 font-medium">
+                  {compressing ? '⏳ Mengompres...' : <>Tambah foto galeri — <span className="text-orange-600 font-semibold underline">klik / seret banyak file</span></>}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">Otomatis dikompres ~&lt;1MB/foto</p>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => { if (e.target.files?.length) void addGalleryFiles(e.target.files); e.target.value = ''; }}
+                className="hidden"
+              />
+            </label>
+
+            {galleryItems.length > 0 && (
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {galleryItems.map((item, idx) => (
+                  <div key={`${item.preview}-${idx}`} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- pratinjau admin lokal via object URL */}
+                    <img src={item.preview} alt={item.file.name} className="w-20 h-14 object-cover rounded-xl border border-slate-200 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-slate-500 truncate">{item.file.name} (baru • {formatFileSize(item.file.size)})</p>
+                      <input
+                        type="text"
+                        value={item.label}
+                        onChange={(e) => setGalleryItems((prev) => prev.map((g, i) => i === idx ? { ...g, label: e.target.value } : g))}
+                        placeholder="Label: Tampak Depan / Samping Kanan / Denah Lt.1"
+                        className="mt-1.5 w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:border-orange-500"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setGalleryItems((prev) => prev.filter((_, i) => i !== idx))}
+                      className="px-2.5 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition shrink-0"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -522,7 +706,7 @@ export default function EditHouseTypePage({
           </Link>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || compressing}
             className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl text-sm font-bold disabled:opacity-50 transition shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-98"
           >
             {submitting ? (

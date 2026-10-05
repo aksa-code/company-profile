@@ -1,6 +1,11 @@
 // src/lib/projectService.ts
 import { supabase } from "./supabase";
 
+export interface UnitGalleryImage {
+  url: string;
+  label?: string;
+}
+
 export interface UnitType {
   id: string;
   name: string;
@@ -15,9 +20,14 @@ export interface UnitType {
   priceStarting?: string;
   price_starting?: string;
   image?: string;
+  gallery?: UnitGalleryImage[] | string[];
+  floorInfo?: string;
+  floor_info?: string;
   isSoldOut?: boolean;
   is_sold_out?: boolean;
 }
+
+export const UNIT_GALLERY_BUCKET = "tipe-detail";
 
 export interface Project {
   id: string;
@@ -89,6 +99,26 @@ export function generateSlug(name: string): string {
     .replace(/(^-|-$)+/g, '');
 }
 
+function normalizeGallery(raw: unknown): UnitGalleryImage[] {
+  if (!raw) return [];
+  const arr = Array.isArray(raw) ? raw : [];
+  return arr
+    .map((item) => {
+      if (typeof item === "string") return { url: item };
+      if (item && typeof item === "object") {
+        const obj = item as Record<string, unknown>;
+        const url = typeof obj.url === "string" ? obj.url : "";
+        if (!url) return null;
+        return {
+          url,
+          label: typeof obj.label === "string" ? obj.label : undefined,
+        };
+      }
+      return null;
+    })
+    .filter((x): x is UnitGalleryImage => x !== null && !!x.url);
+}
+
 function mapProjectData(item: Project): Project {
   if (!item) return item;
   return {
@@ -108,6 +138,8 @@ function mapProjectData(item: Project): Project {
       ...u,
       buildingType: u.buildingType || u.building_type,
       priceStarting: u.priceStarting || u.price_starting,
+      floorInfo: (u as UnitType).floorInfo || (u as UnitType).floor_info,
+      gallery: normalizeGallery((u as UnitType).gallery),
       kitchen: u.kitchen ?? 1,
       carport: u.carport ?? undefined,
       isSoldOut: u.isSoldOut ?? u.is_sold_out ?? false,
@@ -145,6 +177,29 @@ export async function getProjectById(id: string): Promise<Project | null> {
   }
   
   return mapProjectData(data);
+}
+
+export async function getUnitTypeById(unitId: string): Promise<(UnitType & { project_id?: string }) | null> {
+  const { data, error } = await supabase
+    .from("unit_types")
+    .select("*")
+    .eq("id", unitId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching unit type by id:", error);
+    return null;
+  }
+
+  const raw = data as UnitType & { project_id?: string };
+  return {
+    ...raw,
+    buildingType: raw.buildingType || raw.building_type,
+    priceStarting: raw.priceStarting || raw.price_starting,
+    floorInfo: raw.floorInfo || raw.floor_info,
+    gallery: normalizeGallery(raw.gallery),
+    isSoldOut: raw.isSoldOut ?? raw.is_sold_out ?? false,
+  };
 }
 
 export async function upsertUnitType(payload: UnitType, unitId?: string) {

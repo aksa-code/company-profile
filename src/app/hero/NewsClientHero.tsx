@@ -61,6 +61,7 @@ export default function NewsClientHero({ initialNews, header }: { initialNews: N
                   src={typeof item.image === 'string' && item.image ? item.image : "/images/placeholder.svg"}
                   alt={item.title}
                   fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 340px"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-orange-500 text-white text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-md">

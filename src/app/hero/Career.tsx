@@ -84,6 +84,7 @@ export default function Career() {
               src="/images/hero/FotoPro.png"
               alt="Tim Profesional Skyland Property"
               fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover opacity-65 transition-transform duration-700 hover:scale-105"
             />
 

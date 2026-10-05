@@ -99,6 +99,7 @@ export default function ContactPage() {
             src="/images/Banner.png"
             alt="Contact Background"
             fill
+            sizes="100vw"
             className="object-cover scale-105 transform duration-700"
             priority
           />

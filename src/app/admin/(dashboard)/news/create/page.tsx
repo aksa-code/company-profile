@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createNews } from '../../../../../lib/newsService';
+import { compressForUpload, formatFileSize } from '../../../../../lib/imageUpload';
 import Link from 'next/link';
 import NotificationModal from '../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
 
@@ -18,6 +19,7 @@ export default function CreateNewsPage() {
   const [contentString, setContentString] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [compressing, setCompressing] = useState(false);
 
   // State untuk kontrol NotificationModal
   const [modalConfig, setModalConfig] = useState<{
@@ -36,6 +38,35 @@ export default function CreateNewsPage() {
     onConfirm: () => {},
   });
 
+  const failModal = (title: string, message: string) => {
+    setModalConfig({
+      isOpen: true,
+      type: 'warning',
+      title,
+      message,
+      confirmText: 'Tutup',
+      cancelText: '',
+      onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  };
+
+  const handleCoverSelect = async (files: FileList | File[] | null) => {
+    if (!files || Array.from(files).length === 0) return;
+    const file = Array.from(files)[0];
+    if (!file.type.startsWith('image/')) {
+      failModal('Format Tidak Valid', 'Harap unggah file berformat gambar!');
+      return;
+    }
+    setCompressing(true);
+    try {
+      setImageFile(await compressForUpload(file));
+    } catch (err) {
+      failModal('Gambar Terlalu Besar', err instanceof Error ? err.message : 'Gagal mengompres gambar.');
+    } finally {
+      setCompressing(false);
+    }
+  };
+
   // Handle Drag & Drop Events
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -51,7 +82,7 @@ export default function CreateNewsPage() {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setImageFile(e.dataTransfer.files[0]);
+      void handleCoverSelect(e.dataTransfer.files);
     }
   };
 
@@ -63,9 +94,9 @@ export default function CreateNewsPage() {
       let imageUrl = '';
 
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
+        // Single pipeline: imageFile sudah dikompres sekali saat dipilih — langsung upload.
+        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
+        const fileName = `${Date.now()}.${ext}`;
 
         const { createClient } = await import('@supabase/supabase-js');
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -74,13 +105,13 @@ export default function CreateNewsPage() {
 
         const { error: uploadError } = await supabaseClient.storage
           .from('news-images')
-          .upload(filePath, imageFile);
+          .upload(fileName, imageFile, { contentType: imageFile.type || 'image/jpeg', cacheControl: '31536000' });
 
         if (uploadError) throw new Error('Gagal upload gambar: ' + uploadError.message);
 
         const { data: publicUrlData } = supabaseClient.storage
           .from('news-images')
-          .getPublicUrl(filePath);
+          .getPublicUrl(fileName);
 
         imageUrl = publicUrlData.publicUrl;
       }
@@ -223,20 +254,22 @@ export default function CreateNewsPage() {
                   </svg>
                 </div>
                 <p className="text-sm text-slate-600 font-medium">
-                  {imageFile ? (
-                    <span className="text-orange-600 font-bold">{imageFile.name}</span>
+                  {compressing ? (
+                    <span className="text-orange-600 font-bold">⏳ Mengompres gambar...</span>
+                  ) : imageFile ? (
+                    <span className="text-orange-600 font-bold">{imageFile.name} ({formatFileSize(imageFile.size)} — otomatis hemat storage)</span>
                   ) : isDragging ? (
                     <span className="text-orange-600 font-bold">Lepaskan file di sini...</span>
                   ) : (
                     <>Seret & letakkan gambar di sini, atau <span className="text-orange-600 underline">pilih file</span></>
                   )}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">PNG, JPG, atau WEBP</p>
+                <p className="text-xs text-slate-400 mt-1">PNG, JPG, atau WEBP — otomatis dikompres max 1920px (~&lt;1MB)</p>
               </div>
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                onChange={(e) => { void handleCoverSelect(e.target.files); e.target.value = ''; }}
                 className="hidden"
               />
             </label>
@@ -287,7 +320,7 @@ export default function CreateNewsPage() {
           </Link>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || compressing}
             className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold transition shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-98 disabled:opacity-50 text-center"
           >
             {loading ? (

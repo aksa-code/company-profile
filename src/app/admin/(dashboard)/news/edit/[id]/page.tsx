@@ -4,6 +4,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../../../lib/supabase";
+import { compressForUpload, formatFileSize } from "../../../../../../lib/imageUpload";
 import Link from "next/link";
 import NotificationModal from "../../../../../component/ui/NotificationModal"; // Sesuaikan path import komponen modal Anda
 
@@ -27,6 +28,7 @@ export default function EditNewsPage({
   const [contentString, setContentString] = useState("");
   const [existingImage, setExistingImage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [compressing, setCompressing] = useState(false);
 
   // State untuk kontrol NotificationModal
   const [modalConfig, setModalConfig] = useState<{
@@ -83,6 +85,35 @@ export default function EditNewsPage({
     fetchNewsDetail();
   }, [newsId, router]);
 
+  const failModal = (title: string, message: string) => {
+    setModalConfig({
+      isOpen: true,
+      type: "warning",
+      title,
+      message,
+      confirmText: "Tutup",
+      cancelText: "",
+      onConfirm: () => setModalConfig((prev) => ({ ...prev, isOpen: false })),
+    });
+  };
+
+  const handleCoverSelect = async (files: FileList | File[] | null) => {
+    if (!files || Array.from(files).length === 0) return;
+    const file = Array.from(files)[0];
+    if (!file.type.startsWith("image/")) {
+      failModal("Format Tidak Valid", "Harap unggah file berformat gambar!");
+      return;
+    }
+    setCompressing(true);
+    try {
+      setImageFile(await compressForUpload(file));
+    } catch (err) {
+      failModal("Gambar Terlalu Besar", err instanceof Error ? err.message : "Gagal mengompres gambar.");
+    } finally {
+      setCompressing(false);
+    }
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -104,12 +135,12 @@ export default function EditNewsPage({
           }
         }
 
-        // 2. Upload gambar baru
-        const fileExt = imageFile.name.split(".").pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+        // 2. Upload gambar baru (sudah dikompres sekali saat dipilih — langsung upload)
+        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
+        const fileName = `${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("news-images")
-          .upload(fileName, imageFile);
+          .upload(fileName, imageFile, { contentType: imageFile.type || "image/jpeg", cacheControl: "31536000" });
 
         if (uploadError)
           throw new Error("Gagal upload gambar: " + uploadError.message);
@@ -288,7 +319,7 @@ export default function EditNewsPage({
               e.preventDefault();
               setIsDragging(false);
               if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                setImageFile(e.dataTransfer.files[0]);
+                void handleCoverSelect(e.dataTransfer.files);
               }
             }}
           >
@@ -296,9 +327,11 @@ export default function EditNewsPage({
               className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-2xl cursor-pointer transition-colors ${isDragging ? "border-orange-500 bg-orange-50" : "border-slate-200 bg-slate-50/50 hover:bg-orange-50/30 hover:border-orange-300"}`}
             >
               <div className="flex flex-col items-center justify-center pt-4 pb-5 px-4 text-center">
-                {imageFile ? (
+                {compressing ? (
+                  <span className="text-orange-600 font-bold text-sm">⏳ Mengompres gambar...</span>
+                ) : imageFile ? (
                   <span className="text-orange-600 font-bold text-sm">
-                    {imageFile.name}
+                    {imageFile.name} ({formatFileSize(imageFile.size)} — otomatis hemat storage)
                   </span>
                 ) : (
                   <>
@@ -306,7 +339,7 @@ export default function EditNewsPage({
                       Klik atau seret gambar ke sini
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
-                      PNG, JPG, atau JPEG
+                      PNG, JPG, atau JPEG — otomatis dikompres max 1920px (~&lt;1MB)
                     </p>
                   </>
                 )}
@@ -315,7 +348,7 @@ export default function EditNewsPage({
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                onChange={(e) => { void handleCoverSelect(e.target.files); e.target.value = ''; }}
               />
             </label>
           </div>
@@ -358,7 +391,7 @@ export default function EditNewsPage({
           </Link>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || compressing}
             className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-semibold transition disabled:opacity-50 text-center"
           >
             {submitting ? "Menyimpan..." : "Perbarui Berita"}

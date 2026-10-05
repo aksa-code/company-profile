@@ -70,6 +70,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
             src={typeof news.image === 'string' && news.image ? news.image : "/images/placeholder.svg"}
             alt={news.title}
             fill
+            sizes="100vw"
             className="object-cover"
             priority
           />

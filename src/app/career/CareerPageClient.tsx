@@ -54,6 +54,7 @@ export default function CareerPageClient({ careersData }: { careersData: CareerI
             src="/images/Banner.png"
             alt="Career Background"
             fill
+            sizes="100vw"
             className="object-cover scale-105 duration-1000"
             priority
           />
