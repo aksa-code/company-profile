@@ -24,9 +24,21 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/parser": "^8.71.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "eslint-config-next": {
+      "glob": "^10.3.10"
+    },
+    "micromatch": {
+      "braces": "^3.0.3"
+    },
+    "braces": "^3.0.3"
   }
 }

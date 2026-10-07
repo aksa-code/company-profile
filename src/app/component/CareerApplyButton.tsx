@@ -37,7 +37,7 @@ export default function CareerApplyButton({
   });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- penanda mounted untuk portal/modal agar aman dari hydration mismatch; perilaku disengaja dan tidak diubah
+    // penanda mounted untuk portal/modal agar aman dari hydration mismatch; perilaku disengaja dan tidak diubah
     setMounted(true);
   }, []);
 

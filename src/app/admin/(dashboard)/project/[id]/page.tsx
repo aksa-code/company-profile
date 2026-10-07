@@ -65,7 +65,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   }, [projectId, router]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount sekali saat halaman dibuka; perilaku disengaja dan tidak diubah
+    // fetch-on-mount sekali saat halaman dibuka; perilaku disengaja dan tidak diubah
     void fetchData();
   }, [fetchData]);
 

@@ -38,7 +38,7 @@ export default function WhatsAppLeadButton({
   });
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- penanda mounted agar aman dari hydration mismatch; perilaku disengaja dan tidak diubah
+    // penanda mounted agar aman dari hydration mismatch; perilaku disengaja dan tidak diubah
     setMounted(true);
   }, []);
 
