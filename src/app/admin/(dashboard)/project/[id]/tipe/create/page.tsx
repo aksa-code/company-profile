@@ -4,6 +4,7 @@
 import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../../lib/supabase';
+import { touchProjectUpdatedAt } from '../../../../../../../lib/projectService';
 import {
   GALLERY_BUCKET,
   uploadGalleryFiles,
@@ -220,6 +221,9 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
       ]);
 
       if (insertError) throw new Error('Gagal menyimpan tipe rumah: ' + insertError.message);
+
+      // Sentuh updated_at proyek induk agar naik ke urutan teratas.
+      await touchProjectUpdatedAt(projectId);
 
       setModalConfig({
         isOpen: true,

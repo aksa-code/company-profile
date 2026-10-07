@@ -4,7 +4,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../../../lib/supabase';
-import { type UnitGalleryImage } from '../../../../../../../../lib/projectService';
+import { touchProjectUpdatedAt, type UnitGalleryImage } from '../../../../../../../../lib/projectService';
 import {
   GALLERY_BUCKET,
   getStoragePathFromPublicUrl,
@@ -377,6 +377,9 @@ export default function EditHouseTypePage({
         .eq('id', unitId);
 
       if (updateError) throw new Error('Gagal memperbarui tipe rumah: ' + updateError.message);
+
+      // Sentuh updated_at proyek induk agar naik ke urutan teratas.
+      await touchProjectUpdatedAt(projectId);
 
       setModalConfig({
         isOpen: true,

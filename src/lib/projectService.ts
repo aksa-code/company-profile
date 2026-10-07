@@ -56,6 +56,9 @@ export interface Project {
   maps_url?: string;
   unitTypes?: UnitType[];
   unit_types?: UnitType[];
+  // Penanda waktu untuk pengurutan "update terbaru paling atas".
+  updated_at?: string;
+  created_at?: string;
 }
 
 export const MARKETING_HOTLINE = "6282145200700";
@@ -150,14 +153,51 @@ function mapProjectData(item: Project): Project {
 export async function getProjects(): Promise<Project[]> {
   const { data, error } = await supabase
     .from("projects")
-    .select("*, unit_types(*)");
-  
+    .select("*, unit_types(*)")
+    .order("created_at", { ascending: false });
+
   if (error) {
     console.error("Error fetching projects:", error);
     return [];
   }
-  
-  return (data || []).map(mapProjectData);
+
+  // Urutan tampil: update terbaru paling atas (updated_at, fallback created_at).
+  // Sorting client-side agar tetap benar baik sebelum maupun sesudah
+  // kolom updated_at tersedia di database.
+  return sortByRecentUpdate((data || []).map(mapProjectData));
+}
+
+/**
+ * Urutkan daftar proyek: yang terakhir diupdate paling atas.
+ * Memakai updated_at bila ada, fallback ke created_at.
+ */
+export function sortByRecentUpdate<T extends { updated_at?: string; created_at?: string }>(
+  items: T[]
+): T[] {
+  return [...items].sort((a, b) => recencyOf(b) - recencyOf(a));
+}
+
+function recencyOf(item: { updated_at?: string; created_at?: string }): number {
+  const t = Date.parse(item.updated_at || item.created_at || "");
+  return Number.isNaN(t) ? 0 : t;
+}
+
+/**
+ * Best-effort: sentuh updated_at proyek induk agar naik ke urutan teratas
+ * (dipakai saat tipe rumah/denah dibuat atau diubah).
+ * Kegagalan diabaikan (mis. kolom belum ada) — tidak menggagalkan alur utama.
+ */
+export async function touchProjectUpdatedAt(projectId: string): Promise<void> {
+  if (!projectId) return;
+  try {
+    const { error } = await supabase
+      .from("projects")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", projectId);
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    console.warn("touchProjectUpdatedAt diabaikan:", err);
+  }
 }
 
 export async function getAllProjects(): Promise<Project[]> {
