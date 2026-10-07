@@ -18,7 +18,9 @@ export default function Footer() {
     async function fetchProjects() {
       try {
         const data = await getAllProjects();
-        setProjectsData(data);
+        // Footer: urutan dibalik dari daftar utama — yang terakhir
+        // diupdate tampil paling bawah.
+        setProjectsData([...data].reverse());
       } catch (error) {
         console.error("Failed to fetch projects in Footer:", error);
       }
