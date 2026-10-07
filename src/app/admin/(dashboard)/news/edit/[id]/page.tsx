@@ -135,12 +135,12 @@ export default function EditNewsPage({
           }
         }
 
-        // 2. Upload gambar baru (sudah dikompres sekali saat dipilih — langsung upload)
-        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
-        const fileName = `${Date.now()}.${ext}`;
+        // 2. Upload gambar baru (sudah dikompres ke WebP saat dipilih — langsung upload)
+        const baseName = imageFile.name.replace(/\.webp$/i, '').replace(/\.[^.]+$/, '') || 'news';
+        const fileName = `${baseName}_${Date.now()}.webp`;
         const { error: uploadError } = await supabase.storage
           .from("news-images")
-          .upload(fileName, imageFile, { contentType: imageFile.type || "image/jpeg", cacheControl: "31536000" });
+          .upload(fileName, imageFile, { contentType: "image/webp", cacheControl: "31536000", upsert: false });
 
         if (uploadError)
           throw new Error("Gagal upload gambar: " + uploadError.message);
@@ -339,7 +339,7 @@ export default function EditNewsPage({
                       Klik atau seret gambar ke sini
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
-                      PNG, JPG, atau JPEG — otomatis dikompres max 1920px (~&lt;1MB)
+                      PNG, JPG, atau JPEG — otomatis dikompres ke WebP max 1600px (~300KB)
                     </p>
                   </>
                 )}

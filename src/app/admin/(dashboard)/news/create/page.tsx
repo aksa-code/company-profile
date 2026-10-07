@@ -94,9 +94,9 @@ export default function CreateNewsPage() {
       let imageUrl = '';
 
       if (imageFile) {
-        // Single pipeline: imageFile sudah dikompres sekali saat dipilih — langsung upload.
-        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
-        const fileName = `${Date.now()}.${ext}`;
+        // Single pipeline: imageFile sudah dikompres ke WebP saat dipilih — langsung upload.
+        const baseName = imageFile.name.replace(/\.webp$/i, '').replace(/\.[^.]+$/, '') || 'news';
+        const fileName = `${baseName}_${Date.now()}.webp`;
 
         const { createClient } = await import('@supabase/supabase-js');
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -105,7 +105,7 @@ export default function CreateNewsPage() {
 
         const { error: uploadError } = await supabaseClient.storage
           .from('news-images')
-          .upload(fileName, imageFile, { contentType: imageFile.type || 'image/jpeg', cacheControl: '31536000' });
+          .upload(fileName, imageFile, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
 
         if (uploadError) throw new Error('Gagal upload gambar: ' + uploadError.message);
 
@@ -264,7 +264,7 @@ export default function CreateNewsPage() {
                     <>Seret & letakkan gambar di sini, atau <span className="text-orange-600 underline">pilih file</span></>
                   )}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">PNG, JPG, atau WEBP — otomatis dikompres max 1920px (~&lt;1MB)</p>
+                <p className="text-xs text-slate-400 mt-1">PNG, JPG, atau WEBP — otomatis dikompres ke WebP max 1600px (~300KB)</p>
               </div>
               <input
                 type="file"

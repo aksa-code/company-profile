@@ -227,7 +227,7 @@ export default function AboutPage() {
         </motion.div>
 
         {/* Pimpinan Perusahaan (Opsional / Jika ada di companyInfo) */}
-        {companyInfo.leadership && companyInfo.leadership.length > 0 && (
+        {/* {companyInfo.leadership && companyInfo.leadership.length > 0 && (
           <motion.div 
             className="space-y-6 sm:space-y-8"
             initial="hidden"
@@ -264,7 +264,7 @@ export default function AboutPage() {
               ))}
             </div>
           </motion.div>
-        )}
+        )} */}
 
       </div>
 

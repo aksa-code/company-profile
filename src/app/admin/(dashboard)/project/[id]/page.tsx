@@ -4,6 +4,11 @@
 import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getProjectById, Project } from '../../../../../lib/projectService';
+import {
+  GALLERY_BUCKET,
+  getStoragePathFromPublicUrl,
+  removeGalleryPaths,
+} from '../../../../../lib/galleryStorage';
 import { supabase } from '../../../../../lib/supabase';
 import Link from 'next/link';
 import NotificationModal from '../../../../component/ui/NotificationModal'; // Sesuaikan path import komponen modal Anda
@@ -76,30 +81,36 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
       if (fetchError) throw new Error('Gagal mengambil data unit untuk dihapus.');
 
-      // 2. Jika unit punya gambar di Supabase Storage, hapus filenya
+      // 2. Jika unit punya gambar di Supabase Storage, hapus filenya (error diperiksa).
       if (unitData && unitData.image) {
-        const fileName = unitData.image.split('/').pop();
+        const fileName = unitData.image.split('/').pop()?.split('?')[0];
         if (fileName) {
-          await supabase.storage
+          const { error: coverRmError } = await supabase.storage
             .from('house-type-images')
             .remove([fileName]);
+          if (coverRmError) {
+            throw new Error(`Gagal menghapus cover di Storage (${coverRmError.message}). Unit tidak dihapus agar data dan Storage tetap sinkron.`);
+          }
         }
       }
 
-      // 2b. Hapus file-file galeri di bucket tipe-detail
+      // 2b. Hapus file-file galeri di bucket tipe-detail (satu panggilan, error diperiksa).
       const galleryArr = Array.isArray(unitData?.gallery) ? unitData.gallery : [];
       const galleryPaths = galleryArr
         .map((g: unknown) => {
           const url = typeof g === 'string' ? g : (g as { url?: string })?.url;
           if (!url || typeof url !== 'string') return null;
-          const marker = '/storage/v1/object/public/tipe-detail/';
-          const idx = url.indexOf(marker);
-          return idx === -1 ? url.split('/').pop() : url.slice(idx + marker.length).split('?')[0];
+          return getStoragePathFromPublicUrl(url, GALLERY_BUCKET);
         })
         .filter((x): x is string => !!x);
       if (galleryPaths.length > 0) {
-        await supabase.storage.from('tipe-detail').remove(galleryPaths);
+        const { error: galleryRmError } = await removeGalleryPaths(supabase, galleryPaths);
+        if (galleryRmError) {
+          throw new Error(`Gagal menghapus galeri di Storage (${galleryRmError}). Unit tidak dihapus agar data dan Storage tetap sinkron.`);
+        }
       }
+      // Catatan: URL galeri format lama yang tidak bisa di-resolve dilewati (tidak ditebak)
+      // agar tidak salah menghapus object lain — cek manual di bucket jika perlu.
 
       // 3. Hapus baris data dari database tabel unit_types
       const { error: deleteError } = await supabase

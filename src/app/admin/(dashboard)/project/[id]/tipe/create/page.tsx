@@ -4,7 +4,11 @@
 import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../../lib/supabase';
-import { UNIT_GALLERY_BUCKET } from '../../../../../../../lib/projectService';
+import {
+  GALLERY_BUCKET,
+  uploadGalleryFiles,
+  rollbackUploadedFiles,
+} from '../../../../../../../lib/galleryStorage';
 import { compressForUpload, formatFileSize } from '../../../../../../../lib/imageUpload';
 import Link from 'next/link';
 import NotificationModal from '../../../../../../component/ui/NotificationModal';
@@ -110,16 +114,26 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
   const prepareFiles = async (files: FileList | File[]): Promise<File[]> => {
     const list = Array.from(files);
     if (list.some((f) => !f.type.startsWith('image/'))) {
-      showError('Format Tidak Valid', 'Hanya file gambar (JPG/PNG/WebP) yang bisa diupload.');
+      showError('Format Tidak Valid', 'Hanya file gambar (JPG/PNG/WebP) yang bisa diupload. File non-gambar dilewati.');
     }
     const imgs = list.filter((f) => f.type.startsWith('image/'));
     setCompressing(true);
     try {
-      return await Promise.all(imgs.map((f) => compressForUpload(f)));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Gagal mengompres gambar.';
-      showError('Gambar Terlalu Besar', msg);
-      return [];
+      // Per-file (bukan all-or-nothing): 1 file gagal tidak menggugurkan yang lain.
+      const results = await Promise.allSettled(imgs.map((f) => compressForUpload(f)));
+      const ok: File[] = [];
+      const bad: string[] = [];
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled') ok.push(r.value);
+        else bad.push(`${imgs[i].name} (${r.reason instanceof Error ? r.reason.message : 'gagal'})`);
+      });
+      if (bad.length > 0) {
+        showError(
+          'Sebagian File Gagal Diproses',
+          `${bad.length} file dilewati dan TIDAK ditambahkan: ${bad.join('; ')}. File lain yang valid tetap ditambahkan.`
+        );
+      }
+      return ok;
     } finally {
       setCompressing(false);
     }
@@ -143,20 +157,24 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
     e.preventDefault();
     setLoading(true);
 
+    // Lacak semua object yang ter-upload agar bisa di-rollback jika gesam gagal.
+    const uploadedCoverPaths: string[] = [];
+    const uploadedGalleryPaths: string[] = [];
+
     try {
       const generatedUnitId = `${projectId}-${generateId(typeName)}`;
       let imageUrl = '';
 
       if (imageFile) {
-        // Single pipeline: imageFile sudah dikompres sekali saat dipilih — langsung upload.
-        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
-        const fileName = `unit_${Date.now()}.${ext}`;
+        // Single pipeline: imageFile sudah dikompres ke WebP saat dipilih — langsung upload.
+        const fileName = `unit_${Date.now()}.webp`;
 
         const { error: uploadError } = await supabase.storage
           .from('house-type-images')
-          .upload(fileName, imageFile, { contentType: imageFile.type || 'image/jpeg', cacheControl: '31536000' });
+          .upload(fileName, imageFile, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
 
         if (uploadError) throw new Error('Gagal upload gambar: ' + uploadError.message);
+        uploadedCoverPaths.push(fileName);
 
         const { data: publicUrlData } = supabase.storage
           .from('house-type-images')
@@ -165,20 +183,21 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
         imageUrl = publicUrlData.publicUrl;
       }
 
-      // Upload galeri detail ke bucket tipe-detail (sudah dikompres saat dipilih)
-      const gallery: { url: string; label: string }[] = [];
-      for (let i = 0; i < galleryItems.length; i++) {
-        const item = galleryItems[i];
-        const filePath = `${generatedUnitId}/${Date.now()}_${i}.jpg`;
-        const { error: galleryError } = await supabase.storage
-          .from(UNIT_GALLERY_BUCKET)
-          .upload(filePath, item.file, { contentType: item.file.type || 'image/jpeg', cacheControl: '31536000' });
-        if (galleryError) throw new Error('Gagal upload galeri: ' + galleryError.message);
-        const { data: publicUrlData } = supabase.storage
-          .from(UNIT_GALLERY_BUCKET)
-          .getPublicUrl(filePath);
-        gallery.push({ url: publicUrlData.publicUrl, label: item.label.trim() });
+      // Upload galeri detail ke bucket tipe-detail (sudah dikompres saat dipilih).
+      // Per-file: yang gagal dilaporkan, yang berhasil di-rollback agar tidak orphan.
+      const { uploaded, failed } = await uploadGalleryFiles(
+        supabase,
+        generatedUnitId,
+        galleryItems.map((item) => ({ file: item.file, label: item.label }))
+      );
+      uploadedGalleryPaths.push(...uploaded.map((u) => u.path));
+      if (failed.length > 0) {
+        throw new Error(
+          `Gagal upload ${failed.length} foto galeri: ${failed.map((f) => `${f.name} (${f.message})`).join('; ')}. ` +
+          `Tidak ada yang disimpan — file yang sempat ter-upload sudah dibersihkan otomatis.`
+        );
       }
+      const gallery = uploaded.map((u) => ({ url: u.url, label: u.label }));
 
       const { error: insertError } = await supabase.from('unit_types').insert([
         {
@@ -216,7 +235,14 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
         }
       });
     } catch (error: unknown) {
-      const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+      // Rollback: file yang sempat ter-upload dibersihkan agar tidak menjadi orphan.
+      const coverRb = await rollbackUploadedFiles(supabase, 'house-type-images', uploadedCoverPaths);
+      const galleryRb = await rollbackUploadedFiles(supabase, GALLERY_BUCKET, uploadedGalleryPaths);
+      let errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+      const rbErrors = [coverRb.error, galleryRb.error].filter(Boolean);
+      if (rbErrors.length > 0) {
+        errMessage += ` (PERHATIAN: rollback Storage juga gagal — ${rbErrors.join('; ')}. Cek bucket manual untuk file yatim.)`;
+      }
       setModalConfig({
         isOpen: true,
         type: 'danger',
@@ -441,7 +467,7 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
                     <>Seret dan lepas gambar ke sini, atau <span className="text-orange-600 font-semibold underline">klik untuk memilih</span></>
                   )}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">Otomatis dikompres max 1920px (~&lt;1MB) agar hemat kuota 1GB — tetap tajam di web</p>
+                <p className="text-xs text-slate-400 mt-1">Otomatis dikompres ke WebP max 1600px (~300KB) agar hemat kuota 1GB — tetap tajam di web</p>
               </div>
               <input 
                 type="file" 
@@ -471,7 +497,7 @@ export default function CreateHouseTypePage({ params }: { params: Promise<{ id: 
                 <p className="text-sm text-slate-600 font-medium">
                   {compressing ? '⏳ Mengompres...' : <>Seret banyak gambar ke sini, atau <span className="text-orange-600 font-semibold underline">klik untuk memilih</span></>}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">Bisa pilih sekaligus — otomatis dikompres ~&lt;1MB/foto, beri label tiap foto di bawah</p>
+                <p className="text-xs text-slate-400 mt-1">Bisa pilih sekaligus — otomatis dikompres ke WebP ~300KB/foto, beri label tiap foto di bawah</p>
               </div>
               <input
                 type="file"

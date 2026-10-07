@@ -4,7 +4,14 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../../../../../../lib/supabase';
-import { UNIT_GALLERY_BUCKET, type UnitGalleryImage } from '../../../../../../../../lib/projectService';
+import { type UnitGalleryImage } from '../../../../../../../../lib/projectService';
+import {
+  GALLERY_BUCKET,
+  getStoragePathFromPublicUrl,
+  uploadGalleryFiles,
+  removeGalleryPaths,
+  rollbackUploadedFiles,
+} from '../../../../../../../../lib/galleryStorage';
 import { compressForUpload, formatFileSize } from '../../../../../../../../lib/imageUpload';
 import Link from 'next/link';
 import NotificationModal from '../../../../../../../component/ui/NotificationModal';
@@ -115,15 +122,26 @@ export default function EditHouseTypePage({
   const prepareFiles = async (files: FileList | File[]): Promise<File[]> => {
     const list = Array.from(files);
     if (list.some((f) => !f.type.startsWith('image/'))) {
-      showWarning('Format Tidak Valid', 'Hanya file gambar (JPG/PNG/WebP) yang bisa diupload.');
+      showWarning('Format Tidak Valid', 'Hanya file gambar (JPG/PNG/WebP) yang bisa diupload. File non-gambar dilewati.');
     }
     const imgs = list.filter((f) => f.type.startsWith('image/'));
     setCompressing(true);
     try {
-      return await Promise.all(imgs.map((f) => compressForUpload(f)));
-    } catch (err) {
-      showWarning('Gambar Terlalu Besar', err instanceof Error ? err.message : 'Gagal mengompres gambar.');
-      return [];
+      // Per-file (bukan all-or-nothing): 1 file gagal tidak menggugurkan yang lain.
+      const results = await Promise.allSettled(imgs.map((f) => compressForUpload(f)));
+      const ok: File[] = [];
+      const bad: string[] = [];
+      results.forEach((r, i) => {
+        if (r.status === 'fulfilled') ok.push(r.value);
+        else bad.push(`${imgs[i].name} (${r.reason instanceof Error ? r.reason.message : 'gagal'})`);
+      });
+      if (bad.length > 0) {
+        showWarning(
+          'Sebagian File Gagal Diproses',
+          `${bad.length} file dilewati dan TIDAK ditambahkan: ${bad.join('; ')}. File lain yang valid tetap ditambahkan.`
+        );
+      }
+      return ok;
     } finally {
       setCompressing(false);
     }
@@ -222,33 +240,80 @@ export default function EditHouseTypePage({
     ]);
   };
 
-  const extractStoragePath = (url: string, bucket: string): string | null => {
-    const marker = `/storage/v1/object/public/${bucket}/`;
-    const idx = url.indexOf(marker);
-    if (idx === -1) {
-      const parts = url.split('/');
-      return parts.pop() || null;
+  const showDanger = (title: string, message: string) => {
+    setModalConfig({
+      isOpen: true,
+      type: 'danger',
+      title,
+      message,
+      confirmText: 'Tutup',
+      cancelText: '',
+      onConfirm: () => setModalConfig(prev => ({ ...prev, isOpen: false }))
+    });
+  };
+
+  /** Hapus 1 foto galeri: DB/state + file fisik, keduanya terverifikasi. */
+  const handleDeleteGalleryItem = async (idx: number) => {
+    const target = existingGallery[idx];
+    if (!target) return;
+
+    const storagePath = getStoragePathFromPublicUrl(target.url);
+    if (!storagePath) {
+      // URL tidak bisa di-resolve ke object path (mis. format lama) — jangan menebak.
+      // Tawarkan hapus referensi saja agar user tidak terkunci.
+      setModalConfig({
+        isOpen: true,
+        type: 'warning',
+        title: 'File Fisik Tidak Ditemukan',
+        message: 'URL gambar ini tidak cocok dengan format Storage bucket tipe-detail (kemungkinan data lama). File fisik tidak dapat dihapus otomatis — cek manual di Storage. Hapus referensinya dari gallery?',
+        confirmText: 'Ya, Hapus Referensi',
+        cancelText: 'Batal',
+        onConfirm: () => {
+          setExistingGallery((prev) => prev.filter((_, i) => i !== idx));
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+        }
+      });
+      return;
     }
-    return url.slice(idx + marker.length).split('?')[0];
+
+    // Optimistic: hilangkan dari tampilan dulu, kembalikan jika Storage gagal.
+    setExistingGallery((prev) => prev.filter((_, i) => i !== idx));
+    const { error } = await removeGalleryPaths(supabase, [storagePath]);
+    if (error) {
+      setExistingGallery((prev) => {
+        const next = [...prev];
+        next.splice(Math.min(idx, next.length), 0, target);
+        return next;
+      });
+      showDanger(
+        'Gagal Menghapus File Storage',
+        `File fisik gagal dihapus (${error}). Referensi dikembalikan agar database dan Storage tetap sinkron. ` +
+        `Penyebab umum: policy DELETE bucket tipe-detail belum mengizinkan. Cek Storage > tipe-detail > Policies.`
+      );
+    }
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
+    // Lacak object baru yang ter-upload agar bisa di-rollback jika save gagal.
+    const uploadedCoverPaths: string[] = [];
+    const uploadedGalleryPaths: string[] = [];
+
     try {
       let imageUrl = existingImage;
 
       if (imageFile) {
-        // Single pipeline: imageFile sudah dikompres sekali saat dipilih — langsung upload.
-        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
-        const fileName = `unit_${Date.now()}.${ext}`;
+        // Single pipeline: imageFile sudah dikompres ke WebP saat dipilih — langsung upload.
+        const fileName = `unit_${Date.now()}.webp`;
 
         const { error: uploadError } = await supabase.storage
           .from('house-type-images')
-          .upload(fileName, imageFile, { contentType: imageFile.type || 'image/jpeg', cacheControl: '31536000' });
+          .upload(fileName, imageFile, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
 
         if (uploadError) throw new Error('Gagal upload gambar: ' + uploadError.message);
+        uploadedCoverPaths.push(fileName);
 
         const { data: publicUrlData } = supabase.storage
           .from('house-type-images')
@@ -270,20 +335,24 @@ export default function EditHouseTypePage({
         }
       }
 
-      // Upload foto galeri baru ke bucket tipe-detail (sudah dikompres saat dipilih)
-      const newGallery: UnitGalleryImage[] = [];
-      for (let i = 0; i < galleryItems.length; i++) {
-        const item = galleryItems[i];
-        const filePath = `${unitId}/${Date.now()}_${i}.jpg`;
-        const { error: galleryError } = await supabase.storage
-          .from(UNIT_GALLERY_BUCKET)
-          .upload(filePath, item.file, { contentType: item.file.type || 'image/jpeg', cacheControl: '31536000' });
-        if (galleryError) throw new Error('Gagal upload galeri: ' + galleryError.message);
-        const { data: publicUrlData } = supabase.storage
-          .from(UNIT_GALLERY_BUCKET)
-          .getPublicUrl(filePath);
-        newGallery.push({ url: publicUrlData.publicUrl, label: item.label.trim() || undefined });
+      // Upload foto galeri baru ke bucket tipe-detail (sudah dikompres saat dipilih).
+      // Per-file: yang gagal dilaporkan; yang berhasil di-rollback agar tidak orphan.
+      const { uploaded, failed } = await uploadGalleryFiles(
+        supabase,
+        unitId,
+        galleryItems.map((item) => ({ file: item.file, label: item.label }))
+      );
+      uploadedGalleryPaths.push(...uploaded.map((u) => u.path));
+      if (failed.length > 0) {
+        throw new Error(
+          `Gagal upload ${failed.length} foto galeri: ${failed.map((f) => `${f.name} (${f.message})`).join('; ')}. ` +
+          `Tidak ada perubahan disimpan — file yang sempat ter-upload sudah dibersihkan otomatis.`
+        );
       }
+      const newGallery: UnitGalleryImage[] = uploaded.map((u) => ({
+        url: u.url,
+        label: u.label || undefined,
+      }));
 
       const finalGallery = [...existingGallery, ...newGallery];
 
@@ -323,7 +392,15 @@ export default function EditHouseTypePage({
         }
       });
     } catch (error: unknown) {
-      const errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+      // Rollback: file BARU yang sempat ter-upload dibersihkan agar tidak orphan.
+      // (File lama yang user hapus via tombol Hapus sudah dihapus terverifikasi sebelumnya.)
+      const coverRb = await rollbackUploadedFiles(supabase, 'house-type-images', uploadedCoverPaths);
+      const galleryRb = await rollbackUploadedFiles(supabase, GALLERY_BUCKET, uploadedGalleryPaths);
+      let errMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
+      const rbErrors = [coverRb.error, galleryRb.error].filter(Boolean);
+      if (rbErrors.length > 0) {
+        errMessage += ` (PERHATIAN: rollback Storage juga gagal — ${rbErrors.join('; ')}. Cek bucket manual untuk file yatim.)`;
+      }
       setModalConfig({
         isOpen: true,
         type: 'danger',
@@ -575,7 +652,7 @@ export default function EditHouseTypePage({
                     <>Seret dan lepas gambar baru ke sini, atau <span className="text-orange-600 font-semibold underline">klik untuk memilih</span></>
                   )}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">Otomatis dikompres max 1920px (~&lt;1MB) agar hemat kuota 1GB — tetap tajam di web</p>
+                <p className="text-xs text-slate-400 mt-1">Otomatis dikompres ke WebP max 1600px (~300KB) agar hemat kuota 1GB — tetap tajam di web</p>
               </div>
               <input
                 type="file"
@@ -609,18 +686,7 @@ export default function EditHouseTypePage({
                     </div>
                     <button
                       type="button"
-                      onClick={async () => {
-                        const target = existingGallery[idx];
-                        setExistingGallery((prev) => prev.filter((_, i) => i !== idx));
-                        const path = extractStoragePath(target.url, UNIT_GALLERY_BUCKET);
-                        if (path) {
-                          try {
-                            await supabase.storage.from(UNIT_GALLERY_BUCKET).remove([path]);
-                          } catch (err) {
-                            console.error('Gagal menghapus file galeri di storage:', err);
-                          }
-                        }
-                      }}
+                      onClick={() => { void handleDeleteGalleryItem(idx); }}
                       className="px-2.5 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition shrink-0"
                     >
                       Hapus
@@ -644,7 +710,7 @@ export default function EditHouseTypePage({
                 <p className="text-sm text-slate-600 font-medium">
                   {compressing ? '⏳ Mengompres...' : <>Tambah foto galeri — <span className="text-orange-600 font-semibold underline">klik / seret banyak file</span></>}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">Otomatis dikompres ~&lt;1MB/foto</p>
+                <p className="text-xs text-slate-400 mt-1">Otomatis dikompres ke WebP ~300KB/foto</p>
               </div>
               <input
                 type="file"

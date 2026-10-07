@@ -164,16 +164,16 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
     try {
       let imageUrl = existingImage;
 
-      // Jika admin mengupload gambar baru (sudah dikompres sekali saat dipilih — langsung upload)
+      // Jika admin mengupload gambar baru (sudah dikompres ke WebP saat dipilih — langsung upload)
       if (imageFile) {
-        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
-        const fileName = `${Date.now()}.${ext}`;
+        const baseName = imageFile.name.replace(/\.webp$/i, '').replace(/\.[^.]+$/, '') || 'cover';
+        const fileName = `${baseName}_${Date.now()}.webp`;
         const filePath = `${fileName}`;
 
         // 1. Upload gambar baru ke bucket projects-images
         const { error: uploadError } = await supabase.storage
           .from('projects-images')
-          .upload(filePath, imageFile, { contentType: imageFile.type || 'image/jpeg', cacheControl: '31536000' });
+          .upload(filePath, imageFile, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
 
         if (uploadError) throw new Error('Gagal upload gambar: ' + uploadError.message);
 
@@ -336,7 +336,7 @@ export default function EditProjectPage({ params }: { params: Promise<{ id: stri
                     <>Seret dan lepas gambar baru ke sini, atau <span className="text-orange-600 font-semibold underline">klik untuk memilih</span></>
                   )}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">Biarkan kosong jika tidak ingin mengubah gambar. File baru otomatis dikompres max 1920px (~&lt;1MB).</p>
+                <p className="text-xs text-slate-400 mt-1">Biarkan kosong jika tidak ingin mengubah gambar. File baru otomatis dikompres ke WebP max 1600px (~300KB).</p>
               </div>
               <input
                 type="file"

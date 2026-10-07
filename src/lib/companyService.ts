@@ -35,18 +35,18 @@ export const companyInfo = {
       { value: "2018", label: "Est. Malang" },
     ],
   },
-  leadership: [
-    {
-      name: "Bambang Agustiono",
-      role: "Director",
-      quote: "A great leader are not those who can do anything by themselves, but those who can lead them to the glory"
-    },
-    {
-      name: "Nadia Aprellya",
-      role: "Commissary",
-      quote: "Do not hesitate on what you do. Do your best and you will see what's the right path for you"
-    }
-  ],
+  // leadership: [
+  //   {
+  //     name: "Bambang Agustiono",
+  //     role: "Director",
+  //     quote: "A great leader are not those who can do anything by themselves, but those who can lead them to the glory"
+  //   },
+  //   {
+  //     name: "Nadia Aprellya",
+  //     role: "Commissary",
+  //     quote: "Do not hesitate on what you do. Do your best and you will see what's the right path for you"
+  //   }
+  // ],
   values: [
     {
       title: "Reliable & Honest",

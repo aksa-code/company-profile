@@ -119,10 +119,10 @@ export default function CreateProjectPage() {
       let imageUrl = '';
 
       if (imageFile) {
-        // Single pipeline: imageFile sudah dikompres sekali saat dipilih — langsung upload.
-        const ext = imageFile.type === 'image/jpeg' ? 'jpg' : (imageFile.name.split('.').pop() || 'jpg');
-        const fileName = `${Date.now()}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from('projects-images').upload(fileName, imageFile, { contentType: imageFile.type || 'image/jpeg', cacheControl: '31536000' });
+        // Single pipeline: imageFile sudah dikompres ke WebP saat dipilih — langsung upload.
+        const baseName = imageFile.name.replace(/\.webp$/i, '').replace(/\.[^.]+$/, '') || 'cover';
+        const fileName = `${baseName}_${Date.now()}.webp`;
+        const { error: uploadError } = await supabase.storage.from('projects-images').upload(fileName, imageFile, { contentType: 'image/webp', cacheControl: '31536000', upsert: false });
         if (uploadError) throw uploadError;
         const { data: publicUrlData } = supabase.storage.from('projects-images').getPublicUrl(fileName);
         imageUrl = publicUrlData.publicUrl;
@@ -244,7 +244,7 @@ export default function CreateProjectPage() {
                     <>Seret dan lepas gambar ke sini, atau <span className="text-orange-600 font-semibold underline">klik untuk memilih</span></>
                   )}
                 </p>
-                <p className="text-xs text-slate-400 mt-1">Mendukung JPG/PNG/WebP — otomatis dikompres max 1920px (~&lt;1MB), tetap tajam di web</p>
+                <p className="text-xs text-slate-400 mt-1">Mendukung JPG/PNG/WebP — otomatis dikompres ke WebP max 1600px (~300KB), tetap tajam di web</p>
               </div>
               <input 
                 type="file" 
