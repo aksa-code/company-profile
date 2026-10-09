@@ -54,7 +54,7 @@ export default function Navbar() {
         </Link>
 
         {/* Menu Navigasi Desktop */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+        <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-gray-600">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
 
@@ -65,7 +65,7 @@ export default function Navbar() {
                 onClick={(e) => handleNavClick(e, link.href)}
                 className={`transition-all duration-300 relative py-1 hover:-translate-y-0.5 ${
                   isActive 
-                    ? "text-orange-600 font-semibold" 
+                    ? "text-orange-600 font-bold" 
                     : "hover:text-orange-500"
                 }`}
               >
@@ -113,7 +113,7 @@ export default function Navbar() {
       {/* Dropdown Menu Mobile dengan Animasi Halus */}
       {isOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-xl py-5 px-6 animate-fade-in-up duration-300">
-          <nav className="flex flex-col space-y-4 text-base font-medium text-gray-600">
+          <nav className="flex flex-col space-y-4 text-[17px] font-bold text-gray-600">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
 
@@ -124,8 +124,8 @@ export default function Navbar() {
                   onClick={(e) => handleNavClick(e, link.href)}
                   className={`transition-all duration-300 flex items-center justify-between ${
                     isActive 
-                      ? "text-orange-600 font-semibold pl-2 border-l-4 border-orange-500 bg-orange-50/50 py-1.5 rounded-r-lg shadow-sm" 
-                      : "hover:text-orange-500 hover:pl-1"
+                      ? "text-orange-600 font-bold pl-2 border-l-4 border-orange-500 bg-orange-50/50 py-1.5 rounded-r-lg shadow-sm" 
+                      : "hover:text-orange-500 hover:pl-1 font-bold"
                   }`}
                 >
                   <span>{link.name}</span>
