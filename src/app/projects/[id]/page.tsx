@@ -14,6 +14,7 @@ import {
 } from "../../../lib/projectService";
 import WhatsAppLeadButton from "../../component/WhatsAppLeadButton";
 import BankLogo from "../../component/BankLogo";
+import TrackViewContent from "../../component/TrackViewContent";
 
 export const revalidate = 0;
 
@@ -229,6 +230,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen overflow-hidden bg-slate-50 pb-20 font-sans selection:bg-orange-500 selection:text-white">
+      <TrackViewContent contentName={project.title} contentCategory={project.category} />
       <div className="sticky top-0 z-50 border-b border-slate-100 bg-white/85 shadow-sm backdrop-blur-md">
         <Navbar />
       </div>

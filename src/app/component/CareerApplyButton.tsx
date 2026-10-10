@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 import PrivacyNote, { HoneypotField } from "./PrivacyNote";
+import { trackMetaEvent } from "../../lib/metaPixel";
 import {
   isHoneypotFilled,
   claimSubmitSlot,
@@ -141,6 +142,12 @@ export default function CareerApplyButton({
       const customMessage = encodeURIComponent(
         `Halo HRD Skyland Property, perkenalkan nama saya *${fullName}*. Saya ingin melamar untuk posisi *${careerTitle}*. Berikut lampiran CV dan portofolio saya.`
       );
+
+      // Event Lead Meta: lamaran masuk untuk posisi ini.
+      trackMetaEvent("Lead", {
+        content_name: careerTitle,
+        content_category: "Lamaran Kerja",
+      });
 
       // Tutup modal dan buka WhatsApp setelah jeda singkat agar notifikasi terbaca
       // Normalisasi 0 -> 62 agar link wa.me selalu valid.

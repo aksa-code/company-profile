@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 import PrivacyNote, { HoneypotField } from "./PrivacyNote";
+import { trackMetaEvent } from "../../lib/metaPixel";
 import {
   isHoneypotFilled,
   claimSubmitSlot,
@@ -157,6 +158,12 @@ export default function WhatsAppLeadButton({
     if (formattedPhone.startsWith("0")) {
       formattedPhone = "62" + formattedPhone.slice(1);
     }
+
+    // Event Lead Meta: prospek tertarik unit spesifik.
+    trackMetaEvent("Lead", {
+      content_name: `${projectTitle} - ${unitName}`,
+      content_category: "Tanya Unit",
+    });
 
     setTimeout(() => {
       setIsOpen(false);

@@ -5,6 +5,7 @@ import Navbar from "../../../../component/Navbar";
 import Footer from "../../../../component/Footer";
 import Contact from "../../../../component/Contact";
 import WhatsAppLeadButton from "../../../../component/WhatsAppLeadButton";
+import TrackViewContent from "../../../../component/TrackViewContent";
 import {
   getProjectById,
   MARKETING_HOTLINE,
@@ -53,6 +54,7 @@ export default async function UnitDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 font-sans">
+      <TrackViewContent contentName={unit.name} contentCategory={project.title} />
       <div className="sticky top-0 z-50 border-b border-slate-100 bg-white/85 shadow-sm backdrop-blur-md">
         <Navbar />
       </div>

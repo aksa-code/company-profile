@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import PrivacyNote, { HoneypotField } from "./PrivacyNote";
+import { trackMetaEvent } from "../../lib/metaPixel";
 import { isHoneypotFilled, claimSubmitSlot } from "../../lib/antispam";
 import { companyInfo } from "../../lib/companyService"; 
 
@@ -100,6 +101,9 @@ export default function Contact() {
       type: "success",
       message: "Berhasil! Mengarahkan Anda ke WhatsApp...",
     });
+
+    // Event Lead Meta: permintaan konsultasi masuk.
+    trackMetaEvent("Lead", { content_name: "Form Konsultasi" });
 
     const customMessage = encodeURIComponent(
       `Halo ${companyInfo.name}, perkenalkan nama saya *${fullName}*. Saya ingin berkonsultasi mengenai rumah impian (Life Starts With You).`

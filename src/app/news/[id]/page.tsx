@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navbar from "../../component/Navbar";
 import Footer from "../../component/Footer";
 import Contact from "../../component/Contact";
+import TrackViewContent from "../../component/TrackViewContent";
 
 export const revalidate = 0;
 
@@ -31,6 +32,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-16 selection:bg-orange-500 selection:text-white">
+      <TrackViewContent contentName={news.title} contentCategory={news.category} />
       <div className="sticky top-0 z-50">
         <Navbar />
       </div>

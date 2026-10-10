@@ -10,6 +10,7 @@ import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
 import PrivacyNote, { HoneypotField } from "../component/PrivacyNote";
 import { isHoneypotFilled, claimSubmitSlot } from "../../lib/antispam";
+import { trackMetaEvent } from "../../lib/metaPixel";
 import { companyInfo } from "../../lib/companyService";
 import { supabase } from "../../lib/supabase"; // Sesuaikan jalur import supabase Anda jika berbeda
 
@@ -77,6 +78,9 @@ export default function ContactPage() {
         console.error("Terjadi kesalahan koneksi database:", err);
       }
     }
+
+    // Event Lead Meta: prospek masuk dari form kontak utama.
+    trackMetaEvent("Lead", { content_name: "Form Kontak Utama" });
 
     // Membuka jendela WhatsApp
     window.open(`https://wa.me/${targetNumber}?text=${encodeURIComponent(text)}`, "_blank");

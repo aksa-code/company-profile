@@ -12,6 +12,7 @@ import {
   claimSubmitSlot,
   SPAM_THROTTLE_MESSAGE,
 } from "../../lib/antispam";
+import { trackMetaEvent } from "../../lib/metaPixel";
 import { useAutoSlide } from "./useAutoSlide";
 
 // --- DEFINISI INTERFACE UNTUK MENGHINDARI ERROR 'any' ---
@@ -203,6 +204,9 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
         message: "Kesalahan jaringan database.",
       });
     }
+
+    // Event Lead Meta: prospek masuk dari form hero cepat.
+    trackMetaEvent("Lead", { content_name: "Form Hero Cepat" });
 
     setTimeout(() => {
       window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank");
