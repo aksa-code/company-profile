@@ -259,6 +259,13 @@ export default function Footer() {
         <p>
           &copy; {new Date().getFullYear()} {companyInfo.fullName} — All rights
           reserved.
+          <span className="mx-2 text-gray-300">•</span>
+          <Link
+            href="/privasi"
+            className="text-gray-500 font-medium hover:text-orange-500 transition-colors"
+          >
+            Kebijakan Privasi
+          </Link>
         </p>
         <p className="text-gray-400 font-medium">
           Developed by{" "}

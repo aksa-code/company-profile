@@ -5,6 +5,12 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
+import PrivacyNote, { HoneypotField } from "./PrivacyNote";
+import {
+  isHoneypotFilled,
+  claimSubmitSlot,
+  SPAM_THROTTLE_MESSAGE,
+} from "../../lib/antispam";
 
 interface WhatsAppLeadButtonProps {
   unitName: string;
@@ -72,6 +78,18 @@ export default function WhatsAppLeadButton({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Anti-spam: abaikan bot (honeypot) dan kiriman beruntun (<30 detik).
+    const formEl = e.currentTarget as HTMLFormElement;
+    if (isHoneypotFilled(formEl)) return;
+    if (!claimSubmitSlot("leads:unit")) {
+      setNotification({
+        show: true,
+        type: "error",
+        message: SPAM_THROTTLE_MESSAGE,
+      });
+      return;
+    }
     if (!customerName.trim() || !whatsappNumber.trim()) {
       setNotification({
         show: true,
@@ -202,6 +220,7 @@ export default function WhatsAppLeadButton({
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <HoneypotField />
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700">Nama Lengkap</label>
                 <input
@@ -254,6 +273,8 @@ export default function WhatsAppLeadButton({
                   )}
                 </button>
               </div>
+
+              <PrivacyNote />
             </form>
           </div>
         </div>,

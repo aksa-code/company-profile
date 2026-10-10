@@ -16,9 +16,28 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Menambahkan pengalihan otomatis dari URL lama ke halaman baru
-  async redirects() {
+  // Header keamanan baseline untuk semua route. Disengaja tanpa CSP ketat:
+  // CSP penuh berisiko memblokir Meta Pixel, Supabase, dan inline script
+  // Next.js tanpa pengujian ekstensif — 4 header di bawah ini aman.
+  async headers() {
     return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ];
+  },
+
+  // Menambahkan pengalihan otomatis dari URL lama ke halaman baru
+  async redirects() {    return [
       // Dialihkan semua tautan yang diawali /tag/... ke /news
       {
         source: '/tag/:path*',

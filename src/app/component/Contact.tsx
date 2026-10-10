@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import PrivacyNote, { HoneypotField } from "./PrivacyNote";
+import { isHoneypotFilled, claimSubmitSlot } from "../../lib/antispam";
 import { companyInfo } from "../../lib/companyService"; 
 
 export default function Contact() {
@@ -62,6 +64,18 @@ export default function Contact() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Anti-spam: abaikan bot (honeypot) dan kiriman beruntun (<30 detik).
+    const formEl = e.currentTarget as HTMLFormElement;
+    if (isHoneypotFilled(formEl)) return;
+    if (!claimSubmitSlot("leads:consult")) {
+      setNotification({
+        show: true,
+        type: "error",
+        message: "Terlalu cepat! Tunggu sebentar sebelum mengirim lagi.",
+      });
+      return;
+    }
     if (!fullName.trim() || !phone.trim()) {
       setNotification({
         show: true,
@@ -188,6 +202,7 @@ export default function Contact() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <HoneypotField />
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Nama Lengkap</label>
                 <input
@@ -238,6 +253,8 @@ export default function Contact() {
                   Lanjut ke WhatsApp
                 </button>
               </div>
+
+              <PrivacyNote />
             </form>
           </div>
         </div>,

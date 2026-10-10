@@ -8,6 +8,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
+import PrivacyNote, { HoneypotField } from "../component/PrivacyNote";
+import { isHoneypotFilled, claimSubmitSlot } from "../../lib/antispam";
 import { companyInfo } from "../../lib/companyService";
 import { supabase } from "../../lib/supabase"; // Sesuaikan jalur import supabase Anda jika berbeda
 
@@ -38,6 +40,13 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Anti-spam: abaikan bot (honeypot) dan kiriman beruntun (<30 detik).
+    // Form ini tanpa toast error, jadi penolakan throttle diam-diam saja —
+    // kiriman sah pertama selalu lolos karena form langsung dibersihkan.
+    const formEl = e.currentTarget as HTMLFormElement;
+    if (isHoneypotFilled(formEl)) return;
+    if (!claimSubmitSlot("leads:contact")) return;
 
     let text = "";
     let targetNumber = "";
@@ -250,6 +259,7 @@ export default function ContactPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                <HoneypotField />
                 <div>
                   <h3 className="text-base sm:text-lg font-extrabold text-gray-900 mb-1">Kirim Pesan</h3>
                   <p className="text-gray-500 text-xs sm:text-sm">Pilih tujuan pengiriman dan isi formulir di bawah ini untuk terhubung melalui WhatsApp.</p>
@@ -329,6 +339,8 @@ export default function ContactPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
+
+                <PrivacyNote />
               </form>
             )}
           </motion.div>

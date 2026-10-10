@@ -6,6 +6,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../lib/supabase";
+import PrivacyNote, { HoneypotField } from "../component/PrivacyNote";
+import {
+  isHoneypotFilled,
+  claimSubmitSlot,
+  SPAM_THROTTLE_MESSAGE,
+} from "../../lib/antispam";
 import { useAutoSlide } from "./useAutoSlide";
 
 // --- DEFINISI INTERFACE UNTUK MENGHINDARI ERROR 'any' ---
@@ -140,6 +146,18 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
 
   const handleHeroSubmitLeft = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Anti-spam: abaikan bot (honeypot) dan kiriman beruntun (<30 detik).
+    const formEl = e.currentTarget as HTMLFormElement;
+    if (isHoneypotFilled(formEl)) return;
+    if (!claimSubmitSlot("leads:hero")) {
+      setNotification({
+        show: true,
+        type: "error",
+        message: SPAM_THROTTLE_MESSAGE,
+      });
+      return;
+    }
 
     if (!formDataLeft.phone.startsWith("08") || formDataLeft.phone.length < 10 || formDataLeft.phone.length > 13) {
       setPhoneError("Format nomor WhatsApp tidak valid (harus 08... dan 10-13 digit)");
@@ -365,6 +383,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
                 </div>
 
                 <form onSubmit={handleHeroSubmitLeft} className="space-y-2 flex-1 flex flex-col justify-center">
+                  <HoneypotField />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <input
                       type="text"
@@ -412,6 +431,8 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
                       <span>Kirim</span>
                     </button>
                   </div>
+
+                  <PrivacyNote dark />
                 </form>
               </div>
             </div>
