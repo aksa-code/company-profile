@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import VisitorTracker from "../app/component/VisitorTracker";
+import MetaPixel from "../app/component/MetaPixel";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -90,11 +91,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
   return (
     <html lang="id">
       <body className={inter.variable}>
+        <MetaPixel />
         <VisitorTracker />
         {children}
+        {pixelId ? (
+          <noscript>
+            {/* wajib <img> mentah sesuai kode resmi Meta Pixel */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              height="1"
+              width="1"
+              style={{ display: "none" }}
+              src={`https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1`}
+              alt=""
+            />
+          </noscript>
+        ) : null}
       </body>
     </html>
   );
