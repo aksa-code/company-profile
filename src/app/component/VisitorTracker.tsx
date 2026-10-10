@@ -3,6 +3,13 @@
 import { useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 
+const ADMIN_EMAILS = ["skylandnusantara@gmail.com"];
+
+// Batas tunggu cek admin. Tracking TIDAK BOLEH diblokir oleh pengecekan
+// auth yang menggantung/bermasalah — kalau lewat batas ini, anggap bukan
+// admin dan tetap catat (fail-open; risikonya hanya 1 baris admin kehitung).
+const AUTH_CHECK_TIMEOUT_MS = 3000;
+
 // Fungsi sederhana untuk membuat ID unik acak
 const generateUUID = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -21,11 +28,25 @@ export default function VisitorTracker() {
           return;
         }
 
-        // 2. Cek user admin yang sedang login (cadangan)
-        const { data: { user } } = await supabase.auth.getUser();
-        const adminEmails = ["skylandnusantara@gmail.com"];
+        // 2. Cek user admin yang sedang login (cadangan) — TANPA memblokir
+        // tracking. getUser() dilombakan dengan timeout: kalau auth menggantung
+        // atau error, anggap bukan admin dan tetap catat kunjungan.
+        let isAdmin = false;
+        try {
+          const authCheck = supabase.auth.getUser().then(
+            ({ data }) => data.user?.email ?? null,
+            () => null
+          );
+          const timeout = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), AUTH_CHECK_TIMEOUT_MS)
+          );
+          const email = await Promise.race([authCheck, timeout]);
+          isAdmin = !!email && ADMIN_EMAILS.includes(email);
+        } catch {
+          isAdmin = false;
+        }
 
-        if (user && adminEmails.includes(user.email || "")) {
+        if (isAdmin) {
           return;
         }
 
