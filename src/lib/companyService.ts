@@ -1,5 +1,5 @@
 // src/lib/companyService.ts
-import { getProjects, MARKETING_HOTLINE } from "./projectService";
+import { getProjects, MARKETING_HOTLINE, type Project } from "./projectService";
 import { hrdNumber } from "./careerService";
 
 export const companyInfo = {
@@ -63,8 +63,10 @@ export const companyInfo = {
   ]
 };
 
-export async function getCompanyInfo() {
-  const projects = await getProjects();
+export async function getCompanyInfo(projects?: Project[]) {
+  // Homepage sudah mengambil daftar proyek sekali — pakai ulang agar
+  // tidak ada query Supabase ganda per request.
+  const list = projects ?? await getProjects();
   
   return {
     ...companyInfo,
@@ -72,7 +74,7 @@ export async function getCompanyInfo() {
       ...companyInfo.hero,
       stats: [
         { 
-          value: `${projects.length}+`, 
+          value: `${list.length}+`, 
           label: "Active Projects" 
         },
         ...companyInfo.hero.stats.slice(1),

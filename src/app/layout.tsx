@@ -47,9 +47,9 @@ export const metadata: Metadata = {
     siteName: "Skyland Property Nusantara",
     images: [
       {
-        url: "/images/preview.png",
+        url: "/images/preview.jpg",
         width: 1200,
-        height: 630,
+        height: 572,
         alt: "Skyland Property Nusantara Banner",
       },
     ],
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     title: "Skyland Property Nusantara | Properti & Hunian Terbaik di Malang",
     description:
       "Temukan hunian impian dan proyek perumahan unggulan bersama Skyland Property Nusantara di Malang, Jawa Timur.",
-    images: ["/images/preview.png"],
+    images: ["/images/preview.jpg"],
   },
 
   robots: {

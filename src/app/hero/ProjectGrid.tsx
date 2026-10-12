@@ -8,11 +8,13 @@ import { useEffect, useState } from "react";
 import { getAllProjects, Project } from "../../lib/projectService";
 import ProjectCard from "./ProjectCard";
 
-export default function ProjectGrid() {
-  const [projectsData, setProjectsData] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export default function ProjectGrid({ initialProjects }: { initialProjects?: Project[] }) {
+  const [projectsData, setProjectsData] = useState<Project[]>(initialProjects ?? []);
+  const [isLoading, setIsLoading] = useState(!initialProjects);
 
   useEffect(() => {
+    // Jika server sudah menyediakan data (homepage), jangan fetch ulang.
+    if (initialProjects) return;
     async function fetchProjects() {
       try {
         const data = await getAllProjects();
@@ -24,7 +26,7 @@ export default function ProjectGrid() {
       }
     }
     fetchProjects();
-  }, []);
+  }, [initialProjects]);
 
   const isScrollable = projectsData.length > 3;
   // Duplikasi data untuk efek infinite loop otomatis di desktop

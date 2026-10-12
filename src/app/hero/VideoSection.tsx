@@ -2,11 +2,15 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion, Variants } from 'framer-motion';
 import { companyInfo } from '../../lib/companyService';
 
 export default function VideoSection() {
+  // Facade YouTube: jangan load player + JS YouTube saat halaman dibuka.
+  // Iframe berat hanya dibuat setelah pengunjung menekan tombol play.
+  const [playVideo, setPlayVideo] = useState(false);
   // Menambahkan tipe Variants secara eksplisit untuk menghindari error TypeScript
   const leftVariant: Variants = {
     hidden: { opacity: 0, x: -50 },
@@ -65,13 +69,39 @@ export default function VideoSection() {
           variants={rightVariant}
         >
           <div className="relative aspect-video rounded-xl sm:rounded-2xl overflow-hidden shadow-xl bg-black border border-slate-800 transition-all duration-500 hover:border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/10 group">
-            <iframe
-              className="w-full h-full transition-transform duration-700 group-hover:scale-105"
-              src={`https://www.youtube.com/embed/${companyInfo.youtubeVideoId}`}
-              title={`${companyInfo.name} Company Profile`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
+            {playVideo ? (
+              <iframe
+                className="w-full h-full"
+                src={`https://www.youtube.com/embed/${companyInfo.youtubeVideoId}?autoplay=1&rel=0`}
+                title={`${companyInfo.name} Company Profile`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPlayVideo(true)}
+                className="relative block w-full h-full cursor-pointer"
+                aria-label={`Putar video ${companyInfo.name} Company Profile`}
+              >
+                <Image
+                  src={`https://i.ytimg.com/vi/${companyInfo.youtubeVideoId}/hqdefault.jpg`}
+                  alt={`${companyInfo.name} Company Profile`}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <span className="absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/20" />
+                <span className="absolute inset-0 flex items-center justify-center">
+                  <span className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-orange-500 flex items-center justify-center shadow-xl shadow-orange-500/30 transition-transform duration-300 group-hover:scale-110">
+                    <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                </span>
+              </button>
+            )}
           </div>
         </motion.div>
 

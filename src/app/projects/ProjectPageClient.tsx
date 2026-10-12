@@ -72,7 +72,7 @@ export default function ProjectsPageClient({ projectsData }: { projectsData: Pro
       <div className="relative text-white pt-12 pb-12 sm:pt-20 sm:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gray-900">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/Banner.png"
+            src="/images/Banner.webp"
             alt="Projects Background"
             fill
             className="object-cover scale-105 duration-1000"

@@ -9,12 +9,16 @@ import { useEffect, useState } from "react";
 import { companyInfo } from "../../lib/companyService";
 import { getAllProjects, Project } from "../../lib/projectService";
 
-export default function Footer() {
+export default function Footer({ initialProjects }: { initialProjects?: Project[] }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [projectsData, setProjectsData] = useState<Project[]>([]);
+  const [projectsData, setProjectsData] = useState<Project[]>(() =>
+    initialProjects ? [...initialProjects].reverse() : [],
+  );
 
   useEffect(() => {
+    // Jika server sudah menyediakan data (homepage), jangan fetch ulang.
+    if (initialProjects) return;
     async function fetchProjects() {
       try {
         const data = await getAllProjects();
@@ -26,7 +30,7 @@ export default function Footer() {
       }
     }
     fetchProjects();
-  }, []);
+  }, [initialProjects]);
 
   // Mengambil dan membersihkan nomor marketing hotline dari companyInfo.contact.phone
   const rawPhone = companyInfo?.contact?.phone ?? "";

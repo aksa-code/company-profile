@@ -233,10 +233,11 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/hero/Gerbang Skyland Savana.png"
+          src="/images/hero/Gerbang Skyland Savana.webp"
           alt="Skyland Property Background"
           fill
           sizes="100vw"
+          fetchPriority="high"
           className="object-cover opacity-80"
           priority
         />

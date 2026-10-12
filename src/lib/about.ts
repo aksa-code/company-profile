@@ -45,7 +45,7 @@ export const businessConcept: BusinessConcept[] = [
 export const aboutData = {
   // Data untuk Section About di Beranda (Landing Page / Hero view)
   homeSection: {
-    image: "/images/about/kantor-depan.png",
+    image: "/images/about/kantor-depan.webp",
     experienceBadge: {
       years: "7+",
       label: "Tahun Pengalaman",
@@ -84,7 +84,7 @@ export const aboutData = {
       titlePrefix: "Mengenal Lebih Dekat",
       titleHighlight: "Skyland",
       description: "Pengembang properti terpercaya yang berkomitmen menghadirkan hunian berkualitas tinggi dan bernilai investasi terbaik di Malang, Jawa Timur.",
-      image: "/images/Banner.png",
+      image: "/images/Banner.webp",
     },
     visionMissionSection: {
       title: "Membangun Hunian Modern dengan Standar Kualitas Tertinggi",

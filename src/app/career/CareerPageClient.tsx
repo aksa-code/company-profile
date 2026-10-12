@@ -51,7 +51,7 @@ export default function CareerPageClient({ careersData }: { careersData: CareerI
       <div className="relative text-white pt-12 pb-12 sm:pt-20 sm:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gray-900">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/Banner.png"
+            src="/images/Banner.webp"
             alt="Career Background"
             fill
             sizes="100vw"

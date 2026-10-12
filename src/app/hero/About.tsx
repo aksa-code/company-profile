@@ -2,25 +2,14 @@
 
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import AOS from "aos";
-import "aos/dist/aos.css";
+import { motion } from "framer-motion";
 import { companyInfo } from "../../lib/companyService";
 import { aboutData } from "../../lib/about";
 
 export default function About() {
   const data = aboutData.homeSection;
-
-  // Inisialisasi AOS untuk animasi scroll
-  useEffect(() => {
-    AOS.init({
-      duration: 1000,
-      once: true,
-      offset: 100,
-    });
-  }, []);
 
   // Array icon yang unik dan relevan untuk setiap nilai perusahaan (Reliable, Modern, Best Quality)
   const valueIcons = [
@@ -44,7 +33,7 @@ export default function About() {
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
         
         {/* Bagian Kiri: Gambar Perumahan */}
-        <div data-aos="fade-up" className="lg:col-span-5 relative flex flex-col">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.6 }} className="lg:col-span-5 relative flex flex-col">
           <div className="relative h-[280px] sm:h-full sm:min-h-[380px] w-full rounded-2xl overflow-hidden shadow-xl bg-gray-100 group flex-grow">
             <Image
               src={data.image}
@@ -64,10 +53,10 @@ export default function About() {
               {data.experienceBadge.label}
             </span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Bagian Kanan: Teks & Values */}
-        <div data-aos="fade-up" data-aos-delay="200" className="lg:col-span-7 space-y-4 flex flex-col justify-between mt-2 sm:mt-0">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.6, delay: 0.15 }} className="lg:col-span-7 space-y-4 flex flex-col justify-between mt-2 sm:mt-0">
           
           <div>
             <h2 className="text-xl sm:text-3xl font-extrabold text-gray-900 tracking-tight leading-snug">
@@ -92,10 +81,12 @@ export default function About() {
           {/* Kotak Values: 1 kolom di mobile, 3 kolom di tablet/desktop */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 sm:pt-3">
             {companyInfo.values.map((value, index) => (
-              <div 
+              <motion.div
                 key={index}
-                data-aos="fade-up"
-                data-aos-delay={300 + (index * 100)}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.3) }}
                 className="p-3.5 sm:p-4 rounded-xl bg-gray-50/80 border border-gray-100/80 flex sm:flex-col items-start gap-3 sm:gap-0 transition-all duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-md"
               >
                 <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 shrink-0 sm:mb-3">
@@ -107,11 +98,11 @@ export default function About() {
                     {value.description}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
-        </div>
+        </motion.div>
       </div>
     </section>
   );

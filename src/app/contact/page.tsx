@@ -109,7 +109,7 @@ export default function ContactPage() {
       >
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/Banner.png"
+            src="/images/Banner.webp"
             alt="Contact Background"
             fill
             sizes="100vw"

@@ -81,7 +81,7 @@ export default function Career() {
             variants={rightVariant}
           >
             <Image
-              src="/images/hero/FotoPro.png"
+              src="/images/hero/FotoPro.webp"
               alt="Tim Profesional Skyland Property"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
