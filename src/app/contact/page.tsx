@@ -11,8 +11,7 @@ import Footer from "../component/Footer";
 import PrivacyNote, { HoneypotField } from "../component/PrivacyNote";
 import { isHoneypotFilled, claimSubmitSlot } from "../../lib/antispam";
 import { trackMetaEvent } from "../../lib/metaPixel";
-import { companyInfo } from "../../lib/companyService";
-import { supabase } from "../../lib/supabase"; // Sesuaikan jalur import supabase Anda jika berbeda
+import { companyInfo } from "../../lib/companyData";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -61,6 +60,8 @@ export default function ContactPage() {
 
       // Simpan data ke tabel 'leads' Supabase khusus jika tujuannya Admin/Marketing Properti
       try {
+        // Supabase di-load malas saat submit agar tidak membebani bundle awal.
+        const { supabase } = await import("../../lib/supabase");
         const { error } = await supabase.from("leads").insert([
           {
             visitor_name: formData.name,

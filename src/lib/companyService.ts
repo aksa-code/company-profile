@@ -1,81 +1,25 @@
 // src/lib/companyService.ts
-import { getProjects, MARKETING_HOTLINE, type Project } from "./projectService";
-import { hrdNumber } from "./careerService";
+import { getProjects, type Project } from "./projectService";
+import { companyInfo } from "./companyData";
 
-export const companyInfo = {
-  name: "Skyland",
-  fullName: "Skyland Property Nusantara",
-  companyName: "PT Griya Mapan Alami",
-  description: "PT Griya Mapan Alami — Premium residential developer in Malang, East Java since 2018. Building homes, building futures.",
-  address: "Jl. Doktor Sutomo No.26 Kav A4, Klojen, Malang City, East Java 65111",
-  mapsUrl: "https://maps.app.goo.gl/nWdwiuLsdVFazzXw9?g_st=ic",
-  youtubeVideoId: "nI556MObdSE", 
-  slogan: "Grow Smarter and Faster",
-
-  contact: {
-    heading: "Hubungi Kantor Kami",
-    description: "Jangan ragu untuk menghubungi kami melalui saluran berikut untuk informasi lebih lanjut.",
-    addressTitle: "Kantor Pemasaran",
-    phoneTitle: "Marketing Hotline",
-    phone: MARKETING_HOTLINE,
-    hrdPhoneTitle: "Recruitment Contact",
-    hrdPhone: hrdNumber,
-    emailTitle: "Email Resmi Perusahaan",
-    email: "griyamapanalami@gmail.com",
-  },
-
-  hero: {
-    titlePrefix: "BUILD YOUR ",
-    titleHighlight: "DREAM HOME",
-    titleSuffix: " WITH US",
-    description: "Miliki rumah hunian impian dan investasi properti dengan kualitas terbaik di kelasnya. Bersama Skyland Nusantara, wujudkan impian Anda dan keluarga sekarang juga!",
-    stats: [
-      { value: "10+", label: "Active Projects" },
-      { value: "500+", label: "Families Served" },
-      { value: "2018", label: "Est. Malang" },
-    ],
-  },
-  // leadership: [
-  //   {
-  //     name: "Bambang Agustiono",
-  //     role: "Director",
-  //     quote: "A great leader are not those who can do anything by themselves, but those who can lead them to the glory"
-  //   },
-  //   {
-  //     name: "Nadia Aprellya",
-  //     role: "Commissary",
-  //     quote: "Do not hesitate on what you do. Do your best and you will see what's the right path for you"
-  //   }
-  // ],
-  values: [
-    {
-      title: "Reliable & Honest",
-      description: "Berkomitmen terhadap good corporate morality serta dapat diandalkan."
-    },
-    {
-      title: "Modern & Competent",
-      description: "Menyediakan hunian landed dengan fasilitas modern dan terbaik."
-    },
-    {
-      title: "Best Quality, Services & Price",
-      description: "Memberikan kualitas, pelayanan, dan harga terbaik untuk masyarakat."
-    }
-  ]
-};
+// Kompatibilitas mundur: data statis kini tinggal di ./companyData yang
+// bebas Supabase. Client Components disarankan impor langsung dari sana
+// agar supabase-js tidak masuk bundle awal.
+export { companyInfo } from "./companyData";
 
 export async function getCompanyInfo(projects?: Project[]) {
   // Homepage sudah mengambil daftar proyek sekali — pakai ulang agar
   // tidak ada query Supabase ganda per request.
   const list = projects ?? await getProjects();
-  
+
   return {
     ...companyInfo,
     hero: {
       ...companyInfo.hero,
       stats: [
-        { 
-          value: `${list.length}+`, 
-          label: "Active Projects" 
+        {
+          value: `${list.length}+`,
+          label: "Active Projects"
         },
         ...companyInfo.hero.stats.slice(1),
       ],

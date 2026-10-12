@@ -4,7 +4,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "../../lib/supabase";
 import PrivacyNote, { HoneypotField } from "./PrivacyNote";
 import { trackMetaEvent } from "../../lib/metaPixel";
 import {
@@ -113,6 +112,8 @@ export default function CareerApplyButton({
     setLoading(true);
 
     try {
+      // Supabase di-load malas saat submit agar tidak membebani bundle awal.
+      const { supabase } = await import("../../lib/supabase");
       const { error } = await supabase.from("career_applications").insert([
         {
           career_id: careerId,

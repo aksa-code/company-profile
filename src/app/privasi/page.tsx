@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
-import { companyInfo } from "../../lib/companyService";
+import { companyInfo } from "../../lib/companyData";
 
 export const metadata: Metadata = {
   title: "Kebijakan Privasi",

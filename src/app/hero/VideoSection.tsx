@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion, Variants } from 'framer-motion';
-import { companyInfo } from '../../lib/companyService';
+import { companyInfo } from '../../lib/companyData';
 
 export default function VideoSection() {
   // Facade YouTube: jangan load player + JS YouTube saat halaman dibuka.

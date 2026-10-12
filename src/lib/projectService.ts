@@ -61,7 +61,8 @@ export interface Project {
   created_at?: string;
 }
 
-export const MARKETING_HOTLINE = "6282145200700";
+// Nomor hotline kini tinggal di companyData (bebas Supabase).
+export { MARKETING_HOTLINE } from "./companyData";
 
 // Data Statis Global untuk Keamanan, Legalitas, dan Bank KPR
 export const GLOBAL_SECURITY = "One Gate System dengan CCTV 24 Jam";

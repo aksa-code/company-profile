@@ -6,7 +6,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { companyInfo } from "../../lib/companyService";
+import { companyInfo } from "../../lib/companyData";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);

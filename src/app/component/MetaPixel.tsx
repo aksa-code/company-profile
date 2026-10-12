@@ -34,6 +34,7 @@ export default function MetaPixel() {
 
   return (
     <>
+      <link rel="dns-prefetch" href="https://connect.facebook.net" />
       <Script
         src="https://connect.facebook.net/en_US/fbevents.js"
         strategy="afterInteractive"

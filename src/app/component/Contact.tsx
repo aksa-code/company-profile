@@ -9,7 +9,7 @@ import Link from "next/link";
 import PrivacyNote, { HoneypotField } from "./PrivacyNote";
 import { trackMetaEvent } from "../../lib/metaPixel";
 import { isHoneypotFilled, claimSubmitSlot } from "../../lib/antispam";
-import { companyInfo } from "../../lib/companyService"; 
+import { companyInfo } from "../../lib/companyData";
 
 export default function Contact() {
   const [isOpen, setIsOpen] = useState(false);

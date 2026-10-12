@@ -37,8 +37,8 @@ export interface CareerRow {
   glints_url?: string;
 }
 
-// Nomor WhatsApp HRD
-export const hrdNumber = "6282111235001";
+// Nomor WhatsApp HRD & data hero kini tinggal di companyData (bebas Supabase).
+export { hrdNumber, careerHeroData } from "./companyData";
 
 // Fungsi helper untuk menghitung tanggal relatif (misal: "2 hari yang lalu")
 export function getRelativeDate(dateString: string): string {
@@ -65,23 +65,7 @@ export function getRelativeDate(dateString: string): string {
   }
 }
 
-// Data Hero untuk Section Career
-export const careerHeroData = {
-  titleMain: "Bangun Masa Depan Bersama",
-  titleHighlight: "Skyland Property",
-  description: "Bergabunglah dengan tim profesional PT Griya Mapan Alami. Kami menawarkan skema gaji kompetitif, insentif menarik, serta peluang jenjang karier cepat di industri properti.",
-  benefits: [
-    "Gaji Kompetitif & Insentif Menarik",
-    "Peluang Jenjang Karier Cepat",
-    "Pelatihan Digital & Sales Marketing",
-    "Lingkungan Kerja yang Kolaboratif",
-    "Dukungan Event & Pameran Rutin",
-    "Bonus & Reward Pencapaian Target"
-  ],
-  viewAllText: "Lihat Lowongan & Detail Posisi",
-  viewAllLink: "/career",
-  footerText: "Jadilah bagian dari kesuksesan ekspansi properti eksklusif kami."
-};
+// (dipindah ke companyData — lihat re-export di atas)
 
 // Mapping helper dari database row ke CareerItem TypeScript
 const mapRowToCareer = (row: CareerRow): CareerItem => ({

@@ -5,7 +5,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { companyInfo } from "../../lib/companyService";
+import { companyInfo } from "../../lib/companyData";
 import { aboutData } from "../../lib/about";
 
 export default function About() {

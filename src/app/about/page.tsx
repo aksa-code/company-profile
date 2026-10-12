@@ -9,7 +9,7 @@ import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
 import Contact from "../component/Contact";
 import { aboutData, businessConcept } from "../../lib/about";
-import { companyInfo } from "../../lib/companyService";
+import { companyInfo } from "../../lib/companyData";
 
 export default function AboutPage() {
   const pageData = aboutData.page;

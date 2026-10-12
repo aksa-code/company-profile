@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "../../lib/supabase";
 import PrivacyNote, { HoneypotField } from "../component/PrivacyNote";
 import {
   isHoneypotFilled,
@@ -183,6 +182,8 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
     const text = `Halo Admin Skyland, saya ${formDataLeft.name} tertarik dengan penawaran properti. Pesan: "${formDataLeft.message}" (No. HP/WA: ${formDataLeft.phone})`;
 
     try {
+      // Supabase di-load malas saat submit agar tidak membebani bundle awal.
+      const { supabase } = await import("../../lib/supabase");
       const { error } = await supabase.from("leads").insert([
         {
           visitor_name: formDataLeft.name,

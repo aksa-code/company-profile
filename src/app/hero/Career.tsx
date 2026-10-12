@@ -6,7 +6,7 @@ import React from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { motion, Variants } from 'framer-motion';
-import { careerHeroData } from "../../lib/careerService";
+import { careerHeroData } from "../../lib/companyData";
 
 export default function Career() {
   // Animasi sisi kiri (Fade-in dari kiri)

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { supabase } from "../../lib/supabase";
 
 const ADMIN_EMAILS = ["skylandnusantara@gmail.com"];
 
@@ -27,6 +26,9 @@ export default function VisitorTracker() {
         if (window.location.pathname.startsWith("/admin")) {
           return;
         }
+
+        // Supabase di-load malas setelah mount agar tidak membebani bundle awal.
+        const { supabase } = await import("../../lib/supabase");
 
         // 2. Cek user admin yang sedang login (cadangan) — TANPA memblokir
         // tracking. getUser() dilombakan dengan timeout: kalau auth menggantung

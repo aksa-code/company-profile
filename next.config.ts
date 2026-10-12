@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Rampingkan impor barrel agar tree-shaking lebih agresif.
+    optimizePackageImports: ["framer-motion"],
+  },
+
   images: {
     // AVIF/WebP jauh lebih kecil dari JPEG asli Supabase -> hemat egress.
     formats: ["image/avif", "image/webp"],
