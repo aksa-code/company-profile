@@ -1,5 +1,5 @@
 // src/lib/companyService.ts
-import { getProjects } from "./projectService";
+import { getProjects, MARKETING_HOTLINE } from "./projectService";
 import { hrdNumber } from "./careerService";
 
 export const companyInfo = {
@@ -17,9 +17,9 @@ export const companyInfo = {
     description: "Jangan ragu untuk menghubungi kami melalui saluran berikut untuk informasi lebih lanjut.",
     addressTitle: "Kantor Pemasaran",
     phoneTitle: "Marketing Hotline",
-    phone: "6282145200700",
+    phone: MARKETING_HOTLINE,
     hrdPhoneTitle: "Recruitment Contact",
-    hrdPhone: hrdNumber || "089876543210",
+    hrdPhone: hrdNumber,
     emailTitle: "Email Resmi Perusahaan",
     email: "griyamapanalami@gmail.com",
   },

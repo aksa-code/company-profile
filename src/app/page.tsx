@@ -32,8 +32,22 @@ export const metadata: Metadata = {
     description: 'Temukan hunian modern, perumahan eksklusif, dan properti pilihan terbaik di Malang bersama Skyland Property.',
     url: 'https://skylandnusantara.com',
     siteName: 'Skyland Property',
+    images: [
+      {
+        url: '/images/preview.png',
+        width: 1200,
+        height: 630,
+        alt: 'Skyland Property Nusantara Banner',
+      },
+    ],
     locale: 'id_ID',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Skyland Property - Perumahan Eksklusif & Properti Terbaik di Malang',
+    description: 'Temukan hunian modern, perumahan eksklusif, dan properti pilihan terbaik di Malang bersama Skyland Property.',
+    images: ['/images/preview.png'],
   },
   robots: {
     index: true,

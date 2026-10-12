@@ -170,7 +170,16 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
       return;
     }
 
-    const whatsappNumber = companyInfo?.contact?.phone || "6282145200700";
+    const whatsappNumber = companyInfo?.contact?.phone ?? "";
+
+    if (!whatsappNumber) {
+      setNotification({
+        show: true,
+        type: "error",
+        message: "Nomor WhatsApp admin belum tersedia. Coba lagi nanti.",
+      });
+      return;
+    }
     const text = `Halo Admin Skyland, saya ${formDataLeft.name} tertarik dengan penawaran properti. Pesan: "${formDataLeft.message}" (No. HP/WA: ${formDataLeft.phone})`;
 
     try {
@@ -224,7 +233,7 @@ export default function Hero({ projects = [], companyInfo }: HeroProps) {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/hero/Skyland Savana.png"
+          src="/images/hero/Gerbang Skyland Savana.png"
           alt="Skyland Property Background"
           fill
           sizes="100vw"
